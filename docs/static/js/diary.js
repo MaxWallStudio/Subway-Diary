@@ -69,37 +69,6 @@
       reader.readAsDataURL(blob);
     });
   }
-  function formatBytes(bytes) {
-    if (!Number.isFinite(bytes) || bytes < 0) return "확인 불가";
-    if (bytes < 1024) return `${Math.round(bytes)} B`;
-    const units = ["KB", "MB", "GB", "TB"];
-    let value = bytes / 1024, unit = 0;
-    while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit++; }
-    return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
-  }
-  async function updateStorageEstimate(card) {
-    const recordBytes = new Blob([localStorage.getItem(KEY) || ""]).size;
-    card.querySelector("[data-record-size]").textContent = formatBytes(recordBytes);
-    const remainingNode = card.querySelector("[data-storage-remaining]");
-    try {
-      if (!navigator.storage?.estimate) throw new Error("unavailable");
-      const estimate = await navigator.storage.estimate();
-      if (!Number.isFinite(estimate.quota) || estimate.quota <= 0) throw new Error("unavailable");
-      const usage = Number.isFinite(estimate.usage) ? estimate.usage : 0;
-      const remaining = Math.max(0, estimate.quota - usage);
-      const percent = Math.min(100, Math.max(0, usage / estimate.quota * 100));
-      remainingNode.textContent = formatBytes(remaining);
-      card.querySelector("[data-storage-used]").textContent = formatBytes(usage);
-      card.querySelector("[data-storage-quota]").textContent = formatBytes(estimate.quota);
-      card.querySelector(".storage-meter span").style.width = `${percent}%`;
-      card.querySelector(".storage-meter").setAttribute("aria-valuenow", percent.toFixed(1));
-    } catch {
-      remainingNode.textContent = "이 브라우저에서는 확인할 수 없어요";
-      card.querySelector("[data-storage-used]").textContent = "확인 불가";
-      card.querySelector("[data-storage-quota]").textContent = "확인 불가";
-      card.querySelector(".storage-meter span").style.width = "0%";
-    }
-  }
   function visitsFor(id) { return Array.isArray(entries[id]) ? entries[id] : []; }
   function refresh() {
     const visited = Object.keys(entries).filter(id => visitsFor(id).length).length;
@@ -184,8 +153,7 @@
     dialog.querySelector(".diary-form").hidden = true;
     const tools = dialog.querySelector(".diary-tools"); tools.hidden = false;
     const storageCard = dialog.querySelector(".diary-storage-card");
-    storageCard.querySelector(".storage-refresh").addEventListener("click", () => updateStorageEstimate(storageCard));
-    updateStorageEstimate(storageCard);
+    window.bindDiaryStorageCard?.(storageCard);
     dialog.showModal();
   }
   function showRecord(id) {

@@ -89,6 +89,7 @@ def main() -> None:
     )
     rendered = rendered.replace(
         "</body>",
+        '<script src="./static/js/storage-status.js"></script>\n'
         '<script src="./static/js/diary.js"></script>\n'
         '<script>if("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));</script>\n'
         "</body>",
@@ -102,6 +103,7 @@ def main() -> None:
 <meta name="theme-color" content="#f3f5f7"><title>{{ title }} | 지하철 일기</title>
 <link rel="stylesheet" href="./static/css/style.css"><link rel="stylesheet" href="./static/css/pages.css"></head>
 <body data-page="{{ page }}"{% if station_id %} data-station-id="{{ station_id }}"{% endif %}>
+<script src="./static/js/storage-status.js"></script>
 <script src="./static/js/diary.js"></script></body></html>''')
     for page, title in (("collection", "방문 기록"), ("profile", "내 기록"),
                         ("station", "역 기록"), ("record", "기록 작성")):
