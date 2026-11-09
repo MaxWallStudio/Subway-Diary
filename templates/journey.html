@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>나의 지하철 여정 - Station Diary</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<main class="journey-page">
+
+    <a
+        href="{{ url_for('profile') }}"
+        class="back-button"
+    >
+        ← 내 프로필
+    </a>
+
+
+    <header class="journey-header">
+
+        <p class="journey-label">
+            MY SUBWAY JOURNEY
+        </p>
+
+        <h1>
+            나의 지하철 여정
+        </h1>
+
+        <p>
+            지금까지 지하철을 타고 떠난 모든 여정이에요.
+        </p>
+
+    </header>
+
+
+    <section class="journey-main-card">
+
+        <div class="journey-earth">
+            🌎
+        </div>
+
+        <p class="journey-small">
+            추정 총 이동거리
+        </p>
+
+        <strong class="journey-distance">
+            {{ "%.1f"|format(
+                journey_stats["total_distance"]
+            ) }}
+            <span>km</span>
+        </strong>
+
+        <p class="journey-earth-text">
+
+            지구를 약
+
+            <strong>
+                {{ "%.4f"|format(
+                    journey_stats["earth_rounds"]
+                ) }}
+            </strong>
+
+            바퀴 돌았어요 🌎
+
+        </p>
+
+    </section>
+
+
+    <section class="journey-stat-grid">
+
+        <div class="journey-stat">
+
+            <strong>
+                {{ progress["visited"] }}
+            </strong>
+
+            <span>
+                방문한 역
+            </span>
+
+        </div>
+
+
+        <div class="journey-stat">
+
+            <strong>
+                {{ journey_stats["journey"]|length }}
+            </strong>
+
+            <span>
+                기록된 방문
+            </span>
+
+        </div>
+
+    </section>
+
+
+    <section class="journey-route">
+
+        <div class="journey-section-title">
+
+            <h2>
+                🚇 나의 여정
+            </h2>
+
+            <span>
+                {{ journey_stats["journey"]|length }}회
+            </span>
+
+        </div>
+
+
+        {% if journey_stats["journey"] %}
+
+        <div class="journey-list">
+
+            {% for visit in journey_stats["journey"] %}
+
+            <div class="journey-item">
+
+                <div class="journey-dot">
+                    🚇
+                </div>
+
+                <div class="journey-info">
+
+                    <strong>
+                        {{ visit["name"] }}
+                    </strong>
+
+                    <span>
+                        {{ visit["visited_at"][:10] }}
+                    </span>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="journey-empty">
+
+            아직 기록된 여정이 없어요.
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

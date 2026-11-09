@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>결산 - Station Diary</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+
+<body>
+
+<main class="report-page">
+
+
+    <!-- 뒤로가기 -->
+
+    <a href="{{ url_for('profile') }}" class="back-button">
+        ← 내 프로필
+    </a>
+
+
+    <!-- 헤더 -->
+
+    <header class="report-header">
+
+        <p class="report-label">
+            MY DIARY REPORT
+        </p>
+
+        <h1>
+            {{ year }}
+        </h1>
+
+        <p>
+            나의 지하철 기록을 돌아봐요.
+        </p>
+
+    </header>
+
+
+    <!-- ==================== -->
+    <!-- 연별 결산 -->
+    <!-- ==================== -->
+
+    <section class="report-year-card">
+
+        <div class="report-card-label">
+            {{ year }} YEAR
+        </div>
+
+
+        <div class="report-big-number">
+
+            {{ yearly_report["total_visits"] }}
+
+            <span>
+                회
+            </span>
+
+        </div>
+
+
+        <p>
+            지하철을 방문했어요.
+        </p>
+
+
+        <div class="report-grid">
+
+
+            <div>
+
+                <strong>
+                    {{ yearly_report["visited_stations"] }}
+                </strong>
+
+                <span>
+                    방문한 역
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    {{ yearly_report["photo_count"] }}
+                </strong>
+
+                <span>
+                    사진
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    {{ yearly_report["new_stations"] }}
+                </strong>
+
+                <span>
+                    새로운 역
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    {{ "%.1f"|format(yearly_report["total_distance"]) }}
+                </strong>
+
+                <span>
+                    이동 km
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+        <div class="report-earth">
+
+            🌎 지구를 약
+
+            <strong>
+                {{ "%.4f"|format(yearly_report["earth_rounds"]) }}
+            </strong>
+
+            바퀴 돌았어요.
+
+        </div>
+
+
+    </section>
+
+
+    <!-- ==================== -->
+    <!-- 월별 선택 -->
+    <!-- ==================== -->
+
+    <section class="report-month-section">
+
+
+        <div class="report-section-title">
+
+            <h2>
+                📅 월별 기록
+            </h2>
+
+        </div>
+
+
+        <div class="month-grid">
+
+
+            {% for m in range(1, 13) %}
+
+
+            <a href="{{ url_for('report', year=year, month=m) }}#month-detail" class="month-card {% if month == m %}selected{% endif %}">
+
+                <span>
+                    {{ m }}월
+                </span>
+
+            </a>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    </section>
+
+
+    <!-- ==================== -->
+    <!-- 선택된 월 결산 -->
+    <!-- ==================== -->
+
+    {% if monthly_report %}
+
+
+    <section class="report-month-detail" id="month-detail">
+
+
+        <div class="report-card-label">
+
+            {{ year }}.{{ "%02d"|format(month) }}
+
+        </div>
+
+
+        <div class="report-month-number">
+
+            {{ monthly_report["total_visits"] }}
+
+            <span>
+                회 방문
+            </span>
+
+        </div>
+
+
+        <div class="report-detail-list">
+
+
+            <!-- 방문한 역 -->
+
+            <div>
+
+                <span>
+                    🚇 방문한 역
+                </span>
+
+                <strong>
+                    {{ monthly_report["visited_stations"] }}개
+                </strong>
+
+            </div>
+
+
+            <!-- 새로운 역 -->
+
+            <div>
+
+                <span>
+                    ✨ 새로운 역
+                </span>
+
+                <strong>
+                    {{ monthly_report["new_stations"] }}개
+                </strong>
+
+            </div>
+
+
+            <!-- 사진 -->
+
+            <div>
+
+                <span>
+                    📷 사진
+                </span>
+
+                <strong>
+                    {{ monthly_report["photo_count"] }}장
+                </strong>
+
+            </div>
+
+
+            <!-- 이동거리 -->
+
+            <div>
+
+                <span>
+                    🌎 이동거리
+                </span>
+
+                <strong>
+                    {{ "%.1f"|format(monthly_report["total_distance"]) }} km
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ==================== -->
+        <!-- 가장 많이 방문한 역 -->
+        <!-- ==================== -->
+
+        {% if monthly_report["most_visited_station"] %}
+
+
+        <div class="report-highlight">
+
+            <span>
+                ⭐ 가장 많이 방문한 역
+            </span>
+
+            <strong>
+                {{ monthly_report["most_visited_station"]["name"] }} · {{ monthly_report["most_visited_station"]["count"] }}회
+            </strong>
+
+        </div>
+
+
+        {% endif %}
+
+
+        <!-- ==================== -->
+        <!-- 가장 많이 느낀 감정 -->
+        <!-- ==================== -->
+
+        {% if monthly_report["most_emotion"] %}
+
+
+        <div class="report-highlight">
+
+            <span>
+                💭 가장 많이 느낀 감정
+            </span>
+
+            <strong>
+                {{ monthly_report["most_emotion"] }}
+            </strong>
+
+        </div>
+
+
+        {% endif %}
+
+
+        <!-- 지구 몇 바퀴 -->
+
+        <div class="report-earth">
+
+            🌎 이번 달 지구를 약
+
+            <strong>
+                {{ "%.4f"|format(monthly_report["earth_rounds"]) }}
+            </strong>
+
+            바퀴
+
+        </div>
+
+
+    </section>
+
+
+    {% endif %}
+
+
+</main>
+
+
+</body>
+
+</html>

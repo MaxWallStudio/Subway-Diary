@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>역 도감 - Station Diary</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<main class="collection-page">
+
+    <!-- =========================
+         헤더
+    ========================== -->
+
+    <header class="collection-header">
+
+        <a
+            href="{{ url_for('home') }}"
+            class="back-button"
+        >
+            ← 돌아가기
+        </a>
+
+        <p class="home-subtitle">
+            MY SUBWAY COLLECTION
+        </p>
+
+        <h1>
+            🏆 역 도감
+        </h1>
+
+        <p>
+            내가 방문한 역들을 모아봤어요.
+        </p>
+
+
+        <div class="collection-total">
+
+            <strong>
+                {{ progress["visited"] }}
+            </strong>
+
+            <span>
+                / {{ progress["total"] }}개 역
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         호선별 도감
+    ========================== -->
+
+    <section class="collection-lines">
+
+        {% for line, stations in line_groups.items() %}
+
+            {% set visited_count =
+                stations
+                |selectattr("visited")
+                |list
+                |length
+            %}
+
+            <section class="line-collection">
+
+                <!-- 노선 헤더 -->
+
+                <div class="line-collection-header">
+
+                    <div>
+
+                        <span class="line-number">
+                            🚇
+                        </span>
+
+                        <h2>
+                            {{ line }}
+                        </h2>
+
+                    </div>
+
+
+                    <span class="line-progress">
+                        {{ visited_count }} / {{ stations|length }}
+                    </span>
+
+                </div>
+
+
+                <!-- 노선 진행도 -->
+
+                <div class="line-progress-bar">
+
+                    <div
+                        class="line-progress-fill"
+                        data-progress="{{ (visited_count / stations|length * 100) }}"
+                    ></div>
+
+                </div>
+
+
+                <!-- 역 목록 -->
+
+                <div class="collection-stations">
+
+                    {% for station in stations %}
+
+                        {% if station["visited"] %}
+
+                            <!-- 방문한 역 -->
+
+                            <a
+                                href="{{ url_for(
+                                    'station_detail',
+                                    station_id=station['id']
+                                ) }}"
+                                class="collection-station visited"
+                            >
+
+                                <div class="collection-station-icon">
+                                    ✓
+                                </div>
+
+                                <div class="collection-station-info">
+
+                                    <h3>
+                                        {{ station["name"] }}
+                                    </h3>
+
+                                </div>
+
+                                <span class="collection-station-arrow">
+                                    →
+                                </span>
+
+                            </a>
+
+                        {% else %}
+
+                            <!-- 미방문 역
+                                 클릭할 수 없음 -->
+
+                            <div
+                                class="collection-station unvisited"
+                            >
+
+                                <div class="collection-station-icon">
+                                    ?
+                                </div>
+
+                                <div class="collection-station-info">
+
+                                    <h3>
+                                        ???
+                                    </h3>
+
+                                </div>
+
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endfor %}
+
+    </section>
+
+</main>
+
+<script>
+
+    const lineProgressFills =
+        document.querySelectorAll(
+            ".line-progress-fill"
+        );
+
+
+    lineProgressFills.forEach(
+        fill => {
+
+            const progress =
+                fill.dataset.progress;
+
+            fill.style.width =
+                progress + "%";
+
+        }
+    );
+
+</script>
+
+</body>
+</html>

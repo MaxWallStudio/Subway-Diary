@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f3f5f7">
+    <title>방문 기록 - {{ station["name"] }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="add-visit-body">
+    <main class="add-visit-page">
+        <a class="back-button" href="{{ url_for('station_detail', station_id=station['id']) }}">← 역으로 돌아가기</a>
+
+        <header class="add-visit-header">
+            <p class="add-visit-eyebrow">STATION DIARY · MEMORY</p>
+            <h1>🚉 {{ station["name"] }}</h1>
+            <p>이 역에서의 순간을 기록해보세요.</p>
+        </header>
+
+        <form class="add-visit-form" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            {% if error %}
+            <p class="visit-error" role="alert">{{ error }}</p>
+            {% endif %}
+
+            <div class="visit-field">
+                <label for="visited-at">방문 날짜</label>
+                <input id="visited-at" type="date" name="visited_at" required>
+            </div>
+
+            <fieldset class="visit-field emotion-field">
+                <legend>오늘의 감정</legend>
+                <div class="emotion-options">
+                    <label class="emotion-option"><input type="radio" name="emotion" value="😊" required><span>😊</span></label>
+                    <label class="emotion-option"><input type="radio" name="emotion" value="😐"><span>😐</span></label>
+                    <label class="emotion-option"><input type="radio" name="emotion" value="😢"><span>😢</span></label>
+                    <label class="emotion-option"><input type="radio" name="emotion" value="😡"><span>😡</span></label>
+                    <label class="emotion-option"><input type="radio" name="emotion" value="😍"><span>😍</span></label>
+                </div>
+            </fieldset>
+
+            <div class="visit-field">
+                <label for="visit-diary">오늘의 일기</label>
+                <textarea id="visit-diary" name="diary" rows="10" placeholder="오늘의 이야기를 기록해보세요."></textarea>
+            </div>
+
+            <div class="visit-field">
+                <label for="visit-photo">📷 사진</label>
+                <input id="visit-photo" class="visit-file-input" type="file" name="photo" accept="image/*">
+            </div>
+
+            <button class="visit-submit" type="submit">기록 저장하기</button>
+        </form>
+    </main>
+</body>
+
+</html>

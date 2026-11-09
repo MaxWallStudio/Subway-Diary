@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f3f5f7">
+    <title>Station Diary</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        .mobile-break { display: none; }
+        @media (max-width: 700px) { .mobile-break { display: inline; } }
+
+        /* Home aliases use the shared visual tokens. */
+        * { box-sizing: border-box; }
+
+        :root {
+            --bg: var(--diary-bg);
+            --surface: #ffffff;
+            --surface-solid: var(--diary-surface);
+            --text: var(--diary-text);
+            --muted: var(--diary-muted);
+            --line: var(--diary-line);
+            --accent: var(--diary-accent);
+            --accent-strong: var(--diary-accent-strong);
+            --accent-soft: var(--diary-accent-soft);
+            --shadow: var(--diary-shadow-md);
+            --radius-lg: var(--diary-radius-lg);
+            --radius-md: var(--diary-radius-md);
+        }
+
+
+        body {
+            margin: 0;
+
+            /* 기존 배경의 그라데이션을 유지하면서 아이보리 계열로 변경 */
+            background: var(--bg);
+
+            color: var(--text);
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Pretendard",
+                "Noto Sans KR",
+                "Segoe UI",
+                sans-serif;
+
+            letter-spacing: -.02em;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .home-page {
+            width: min(760px, calc(100% - 28px));
+            margin: 0 auto;
+            padding: 26px 0 64px;
+        }
+
+        /* Header */
+        .home-header {
+            position: relative;
+            padding: 22px 4px;
+        }
+
+        .home-header::after {
+            content: "";
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            right: 2%;
+            top: -25px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0,168,117,.13), rgba(0,168,117,0));
+            filter: blur(2px);
+            pointer-events: none;
+        }
+
+        .home-subtitle {
+            margin: 0 0 11px;
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .18em;
+        }
+
+        .home-header h1 {
+            margin: 0;
+            font-family: inherit;
+            font-size: clamp(36px, 6vw, 58px);
+            line-height: 1.02;
+            font-weight: 850;
+            letter-spacing: -.055em;
+        }
+
+        .home-description {
+            margin: 18px 0 0;
+            color: var(--muted);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .profile-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 16px 4px;
+            padding: 11px 16px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #fff;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 750;
+            box-shadow: none;
+            transition: .2s ease;
+        }
+
+        .profile-button:hover {
+            transform: translateY(-2px);
+            background: #fff;
+            box-shadow: 0 12px 25px rgba(30,34,55,.08);
+        }
+
+        /* Shared section */
+        .map-section,
+        .station-section,
+        .memory-today-section {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 15px;
+            margin: 0 4px 13px;
+        }
+
+        .section-title h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 850;
+            letter-spacing: -.04em;
+        }
+
+        .section-title span {
+            color: #9297a5;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* Progress */
+        .progress-card-link {
+            display: block;
+        }
+
+        .progress-card {
+            position: relative;
+            overflow: hidden;
+            padding: 29px 31px 27px;
+            border-radius: var(--radius-lg);
+            background: #fff;
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            transition: transform .22s ease, box-shadow .22s ease;
+        }
+
+        .progress-card::before {
+            content: "";
+            position: absolute;
+            width: 210px;
+            height: 210px;
+            right: -80px;
+            top: -105px;
+            border-radius: 50%;
+            background: rgba(0,168,117,.08);
+        }
+
+        .progress-card-link:hover .progress-card {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 32px rgba(24,42,56,.09);
+        }
+
+        .progress-header {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .progress-label {
+            margin: 0 0 5px;
+            color: #858a99;
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .progress-card h2 {
+            margin: 0;
+            font-size: 42px;
+            line-height: 1;
+            font-weight: 850;
+            letter-spacing: -.06em;
+        }
+
+        .progress-card h2 span {
+            color: #b1b5c0;
+            font-size: 19px;
+            font-weight: 650;
+            letter-spacing: -.03em;
+        }
+
+        .progress-percent {
+            position: relative;
+            color: var(--accent);
+            font-size: 22px;
+            font-weight: 850;
+        }
+
+        .progress-bar {
+            position: relative;
+            overflow: hidden;
+            height: 9px;
+            margin-top: 25px;
+            border-radius: 999px;
+            background: #e4e9ee;
+        }
+
+        .progress-fill {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #00a875, #008c63);
+            box-shadow: 0 4px 14px rgba(0,168,117,.22);
+            transition: width .8s cubic-bezier(.2,.8,.2,1);
+        }
+
+        .progress-description {
+            margin: 13px 0 0;
+            color: #777d8b;
+            font-size: 13px;
+        }
+
+        .progress-description strong { color: #4e5260; }
+
+        /* Today's memories */
+        .today-memory-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .today-memory-card {
+            position: relative;
+            min-height: 185px;
+            padding: 23px 24px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            box-shadow: 0 10px 30px rgba(27,31,52,.045);
+            transition: .22s ease;
+        }
+
+        .today-memory-card:hover {
+            transform: translateY(-3px);
+            border-color: #dedff1;
+            box-shadow: 0 18px 40px rgba(27,31,52,.08);
+        }
+
+        .today-memory-date {
+            margin-bottom: 10px;
+            color: #9a9eaa;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .today-memory-card h3 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 850;
+        }
+
+        .today-memory-emotion {
+            display: inline-flex;
+            margin-top: 10px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .today-memory-card p {
+            display: -webkit-box;
+            overflow: hidden;
+            margin: 13px 30px 0 0;
+            color: #737887;
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-box-orient: vertical;
+        }
+
+        .today-memory-card .empty-memory {
+            color: #b0b3bd;
+        }
+
+        .today-memory-arrow,
+        .station-arrow {
+            position: absolute;
+            right: 22px;
+            bottom: 21px;
+            color: #b0b4c0;
+            font-size: 20px;
+            transition: transform .2s ease, color .2s ease;
+        }
+
+        .today-memory-card:hover .today-memory-arrow,
+        .station-card:hover .station-arrow {
+            color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        /* Today's memory toggle */
+        .extra-memory {
+            display: none;
+        }
+
+        .today-memory-list.is-expanded .extra-memory {
+            display: block;
+            animation: memory-reveal .24s ease both;
+        }
+
+        @keyframes memory-reveal {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .memory-toggle-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px 16px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255,255,255,.8);
+            color: #666b79;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .memory-toggle-button:hover {
+            background: #fff;
+            color: var(--accent);
+            border-color: #dfe0f1;
+            transform: translateY(-1px);
+        }
+
+        .toggle-icon {
+            font-size: 17px;
+            line-height: 10px;
+            transition: transform .2s ease;
+        }
+
+        .memory-toggle-button.is-expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Station groups */
+        .station-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .station-group {
+            min-width: 0;
+        }
+
+        .station-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0 4px 10px;
+        }
+
+        .station-group-title {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .station-group-title h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 850;
+            letter-spacing: -.035em;
+        }
+
+        .station-group-count {
+            color: #9a9eaa;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .line-dot {
+            display: block;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: #aeb2bd;
+            box-shadow: 0 0 0 4px rgba(174,178,189,.13);
+        }
+
+        .station-card[data-line] {
+            --line-color: #aeb2bd;
+            --line-soft: #f1f2f5;
+            border-left: 4px solid var(--line-color);
+        }
+
+        .station-icon[data-line] {
+            background: var(--line-soft);
+        }
+
+        .line-dot[data-line] {
+            background: var(--line-color);
+            box-shadow: 0 0 0 4px var(--line-soft);
+        }
+
+        /* Seoul subway line colors */
+        .station-card[data-line*="1호선"],
+        .line-dot[data-line*="1호선"] {
+            --line-color: #0052a4;
+            --line-soft: #e8f0fa;
+        }
+
+        .station-card[data-line*="2호선"],
+        .line-dot[data-line*="2호선"] {
+            --line-color: #00a84f;
+            --line-soft: #e6f6ee;
+        }
+
+        .station-card[data-line*="3호선"],
+        .line-dot[data-line*="3호선"] {
+            --line-color: #ef7c1c;
+            --line-soft: #fff0e4;
+        }
+
+        .station-card[data-line*="4호선"],
+        .line-dot[data-line*="4호선"] {
+            --line-color: #00a5de;
+            --line-soft: #e5f6fb;
+        }
+
+        .station-card[data-line*="5호선"],
+        .line-dot[data-line*="5호선"] {
+            --line-color: #996cac;
+            --line-soft: #f2ebf5;
+        }
+
+        .station-card[data-line*="6호선"],
+        .line-dot[data-line*="6호선"] {
+            --line-color: #cd7c2f;
+            --line-soft: #fbf0e6;
+        }
+
+        .station-card[data-line*="7호선"],
+        .line-dot[data-line*="7호선"] {
+            --line-color: #747f00;
+            --line-soft: #f0f2df;
+        }
+
+        .station-card[data-line*="8호선"],
+        .line-dot[data-line*="8호선"] {
+            --line-color: #e6186c;
+            --line-soft: #fbe7f0;
+        }
+
+        .station-card[data-line*="9호선"],
+        .line-dot[data-line*="9호선"] {
+            --line-color: #bdb092;
+            --line-soft: #f5f2ec;
+        }
+
+        /* Map */
+        .station-map {
+            height: 390px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            background: #e9ebf1;
+            box-shadow: 0 12px 35px rgba(27,31,52,.06);
+        }
+
+        .leaflet-container {
+            font-family: inherit;
+        }
+
+        .map-popup-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 145px;
+            padding: 2px 1px;
+            color: #171a22;
+        }
+
+        .map-popup-link:hover strong {
+            color: var(--accent);
+        }
+
+        .map-popup-icon {
+            display: grid;
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            place-items: center;
+            border-radius: 10px;
+            background: #f0f1ff;
+            font-size: 17px;
+        }
+
+        .map-popup-link span:last-child {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .map-popup-link strong {
+            font-size: 13px;
+        }
+
+        .map-popup-link small {
+            color: #8b909d;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .leaflet-control-zoom {
+            border: 0 !important;
+            box-shadow: 0 7px 20px rgba(27,31,52,.12) !important;
+        }
+
+        .leaflet-control-zoom a {
+            color: #303440 !important;
+            border: 0 !important;
+        }
+
+        /* Station list */
+        .station-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .station-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-height: 82px;
+            padding: 15px 52px 15px 17px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 4px 16px rgba(24,42,56,.04);
+            transition: .2s ease;
+        }
+
+        .station-card:hover {
+            transform: translateY(-2px);
+            border-color: #00a875;
+            box-shadow: 0 10px 24px rgba(24,42,56,.08);
+        }
+
+        .station-icon {
+            display: grid;
+            flex: 0 0 46px;
+            width: 46px;
+            height: 46px;
+            margin-right: 14px;
+            place-items: center;
+            border-radius: 14px;
+            background: var(--accent-soft);
+            font-size: 22px;
+        }
+
+        .station-info {
+            min-width: 0;
+        }
+
+        .station-line {
+            display: block;
+            overflow: hidden;
+            margin-bottom: 3px;
+            color: #8f94a2;
+            font-size: 11px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .station-info h3 {
+            overflow: hidden;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 820;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty {
+            padding: 60px 20px;
+            text-align: center;
+            border: 1px dashed #dfe1e9;
+            border-radius: var(--radius-md);
+            background: rgba(255,255,255,.55);
+        }
+
+        .empty-icon {
+            margin-bottom: 10px;
+            font-size: 38px;
+        }
+
+        .empty h3 {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .empty p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* Hide the data-only elements */
+        #station-data {
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+            .home-page {
+                width: min(100% - 24px, 560px);
+                padding: 30px 0 60px;
+            }
+
+            .home-header {
+                padding: 15px 4px 27px;
+            }
+
+        .home-header h1 {
+                font-size: 39px;
+            }
+
+            .home-description {
+                font-size: 14px;
+            }
+
+            .profile-button {
+                margin-left: 4px;
+            }
+
+            .progress-card {
+                padding: 24px 22px;
+                border-radius: 23px;
+            }
+
+            .progress-card h2 {
+                font-size: 36px;
+            }
+
+            .today-memory-list,
+            .station-list {
+                grid-template-columns: 1fr;
+            }
+
+            .station-map {
+                height: 330px;
+                border-radius: 22px;
+            }
+
+            .section-title h2 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header class="scroll-header" id="scrollHeader">
+    <div class="scroll-header-inner">
+
+        <a href="{{ url_for('home') }}" class="scroll-header-logo">
+            Station Diary
+        </a>
+
+        <a
+            href="{{ url_for('profile') }}"
+            class="scroll-header-profile"
+        >
+            프로필
+        </a>
+
+    </div>
+</header>
+
+<main class="home-page">
+
+    <div class="map-decoration" aria-hidden="true">
+        <div class="map-contour contour-1"></div>
+        <div class="map-contour contour-2"></div>
+        <div class="map-contour contour-3"></div>
+
+        <div class="map-path"></div>
+
+        <div class="map-marker marker-1"></div>
+        <div class="map-marker marker-2"></div>
+        <div class="map-marker marker-3"></div>
+    </div>
+
+    <header class="home-header">
+        <p class="home-subtitle">MY SUBWAY MEMORIES</p>
+        <h1>Station Diary</h1>
+        <p class="home-description">
+            내가 지나온 역에<br class="mobile-break"> 나만의 추억을 기록해보세요.
+        </p>
+
+    </header>
+
+    <a href="{{ url_for('profile') }}" class="profile-button">
+        <span>👤</span>
+        <span>내 프로필</span>
+    </a>
+
+    <a href="{{ url_for('collection') }}" class="progress-card-link">
+        <section class="progress-card">
+            <div class="progress-header">
+                <div>
+                    <p class="progress-label">나의 역 진행도</p>
+                    <h2>
+                        {{ progress["visited"] }}
+                        <span>/ {{ progress["total"] }}</span>
+                    </h2>
+                </div>
+                <div class="progress-percent">
+                    {{ "%.1f"|format(progress["progress"]) }}%
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div
+                    class="progress-fill"
+                    data-progress="{{ progress['progress'] }}"
+                ></div>
+            </div>
+
+            <p class="progress-description">
+                {% if progress["visited"] == 0 %}
+                    아직 방문한 역이 없어요. 첫 번째 역을 기록해보세요!
+                {% elif progress["visited"] == progress["total"] %}
+                    🎉 모든 역을 방문했어요!
+                {% else %}
+                    지금까지 <strong>{{ progress["visited"] }}개</strong> 역을 방문했어요.
+                {% endif %}
+            </p>
+        </section>
+    </a>
+
+    {% if memories_today %}
+    <section class="memory-today-section">
+        <div class="section-title">
+            <h2>오늘의 추억</h2>
+            <span>{{ memories_today|length }}개의 기록</span>
+        </div>
+
+        <div class="today-memory-list" id="today-memory-list">
+            {% for memory in memories_today %}
+            <a
+                class="today-memory-card{% if loop.index > 2 %} extra-memory{% endif %}"
+                href="{{ url_for('station_detail', station_id=memory['station_id']) }}"
+            >
+                <div class="today-memory-date">{{ memory['visited_at'] }}</div>
+                <h3>🚉 {{ memory['station_name'] }}</h3>
+
+                {% if memory['emotion'] %}
+                <div class="today-memory-emotion">{{ memory['emotion'] }}</div>
+                {% endif %}
+
+                {% if memory['diary'] %}
+                <p>{{ memory['diary'] }}</p>
+                {% else %}
+                <p class="empty-memory">남겨둔 일기가 없어요.</p>
+                {% endif %}
+
+                <span class="today-memory-arrow">→</span>
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if memories_today|length > 2 %}
+        <button
+            type="button"
+            class="memory-toggle-button"
+            id="memory-toggle-button"
+            aria-expanded="false"
+        >
+            <span>더보기</span>
+            <span class="toggle-icon">⌄</span>
+        </button>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="map-section">
+        <div class="section-title">
+            <h2>나의 방문 지도</h2>
+            <span>{{ visited_stations|length }}개 역</span>
+        </div>
+
+        <div id="map" class="station-map"></div>
+
+        <div id="station-data">
+            {% for station in visited_stations %}
+            <div
+                class="station-data-item"
+                data-name="{{ station['name'] }}"
+                data-latitude="{{ station['latitude'] }}"
+                data-longitude="{{ station['longitude'] }}"
+            ></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="station-section">
+        <div class="section-title">
+            <h2>역 목록</h2>
+            <span>{{ stations|length }}개</span>
+        </div>
+
+        {% if line_groups %}
+
+        <div class="station-groups">
+
+            {% for line_key, grouped_stations in line_groups.items() %}
+
+                <section class="station-group">
+
+                    <!-- 노선 헤더 -->
+                    <div class="station-group-header">
+
+                        <div class="station-group-title">
+
+                            <span
+                                class="line-dot"
+                                data-line="{{ line_key }}"
+                            ></span>
+
+                            <h3>{{ line_key }}</h3>
+
+                        </div>
+
+                        <span class="station-group-count">
+                            {{ grouped_stations|length }}개
+                        </span>
+
+                    </div>
+
+
+                    <!-- 역 목록 -->
+                    <div class="station-list">
+
+                        {% for grouped_station in grouped_stations %}
+
+                            <a
+                                class="station-card{% if loop.index > 4 %} extra-station{% endif %}"
+                                href="{{ url_for(
+                                    'station_detail',
+                                    station_id=grouped_station['id']
+                                ) }}"
+                                data-line="{{ line_key }}"
+                            >
+
+                                <div
+                                    class="station-node"
+                                    data-line="{{ line_key }}"
+                                >
+                                    <div
+                                        class="station-number"
+                                        data-line="{{ line_key }}"
+                                    >
+                                        {{ grouped_station["station_number"] }}
+                                    </div>
+
+                                    <div class="station-info">
+                                        <h3>{{ grouped_station["name"] }}</h3>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="station-route-line"
+                                    data-line="{{ line_key }}"
+                                ></div>
+
+                            </a>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <!-- 5개 이상일 때 더보기 -->
+                    {% if grouped_stations|length > 4 %}
+
+                        <button
+                            type="button"
+                            class="station-more-button"
+                        >
+                            더보기 <span>⌄</span>
+                        </button>
+
+                    {% endif %}
+
+                </section>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+            <div class="empty">
+                <div class="empty-icon">🚉</div>
+                <h3>등록된 역이 없어요</h3>
+                <p>역을 추가해보세요.</p>
+            </div>
+
+        {% endif %}
+    </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    const progressFill = document.querySelector(".progress-fill");
+
+    if (progressFill) {
+        const progress = Math.max(
+            0,
+            Math.min(100, Number(progressFill.dataset.progress) || 0)
+        );
+
+        requestAnimationFrame(() => {
+            progressFill.style.width = progress + "%";
+        });
+    }
+
+    const memoryList = document.getElementById("today-memory-list");
+    const memoryToggle = document.getElementById("memory-toggle-button");
+
+    if (memoryList && memoryToggle) {
+        memoryToggle.addEventListener("click", () => {
+            const expanded = memoryList.classList.toggle("is-expanded");
+            memoryToggle.classList.toggle("is-expanded", expanded);
+            memoryToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+
+            const label = memoryToggle.querySelector("span:first-child");
+            if (label) {
+                label.textContent = expanded ? "접기" : "더보기";
+            }
+        });
+    }
+
+    document.querySelectorAll(".station-more-button").forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const group = button.closest(".station-group");
+            const stationList = group.querySelector(".station-list");
+
+            const isExpanded =
+                stationList.dataset.expanded === "true";
+
+
+            /* =========================================
+            펼치기
+            ========================================= */
+
+            if (!isExpanded) {
+
+                // 현재 접힌 높이
+                stationList.style.maxHeight = "174px";
+
+                // 브라우저가 현재 높이를 확실하게 적용하도록 함
+                stationList.offsetHeight;
+
+                // 실제 전체 콘텐츠 높이
+                const fullHeight = stationList.scrollHeight;
+
+                // 실제 높이까지 애니메이션
+                stationList.style.maxHeight = fullHeight + "px";
+
+                stationList.dataset.expanded = "true";
+
+                button.classList.add("is-expanded");
+
+                const label = button.childNodes[0];
+
+                if (label) {
+                    label.textContent = "접기 ";
+                }
+
+            }
+
+
+            /* =========================================
+            접기
+            ========================================= */
+
+            else {
+
+                // 현재 실제 높이를 먼저 고정
+                const currentHeight = stationList.scrollHeight;
+
+                stationList.style.maxHeight =
+                    currentHeight + "px";
+
+                // 현재 높이 적용
+                stationList.offsetHeight;
+
+                // 174px까지 줄어듦
+                stationList.style.maxHeight = "174px";
+
+                stationList.dataset.expanded = "false";
+
+                button.classList.remove("is-expanded");
+
+                const label = button.childNodes[0];
+
+                if (label) {
+                    label.textContent = "더보기 ";
+                }
+
+
+                /* ================================
+                접기와 동시에 화면 위치 이동
+                ================================= */
+
+                const targetTop =
+                    group.getBoundingClientRect().top +
+                    window.scrollY -
+                    20 - 80;
+
+                const startScroll = window.scrollY;
+
+                const duration = 900;
+
+                const startTime = performance.now();
+
+
+                function animateScroll(currentTime) {
+
+                    const elapsed =
+                        currentTime - startTime;
+
+                    const progress =
+                        Math.min(elapsed / duration, 1);
+
+
+                    // CSS max-height transition과 같은 선형 진행으로 맞춘다.
+                    const eased = progress;
+
+
+                    const currentScroll =
+                        startScroll +
+                        (targetTop - startScroll) * eased;
+
+
+                    // 전역 scroll-behavior:smooth가 프레임별 이동을 다시
+                    // 애니메이션하지 않도록 직접 위치를 적용한다.
+                    document.documentElement.style.scrollBehavior = "auto";
+                    window.scrollTo(0, currentScroll);
+
+
+                    if (progress < 1) {
+                        requestAnimationFrame(
+                            animateScroll
+                        );
+                    } else {
+                        document.documentElement.style.removeProperty("scroll-behavior");
+                    }
+
+                }
+
+
+                requestAnimationFrame(
+                    animateScroll
+                );
+            }
+
+        });
+
+    });
+
+
+    const mapElement = document.getElementById("map");
+
+    if (mapElement) {
+        const map = L.map("map", {
+            zoomControl: true,
+            attributionControl: true
+        }).setView([37.5665, 126.9780], 11);
+
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution: "&copy; OpenStreetMap contributors"
+            }
+        ).addTo(map);
+
+        const stationElements =
+            document.querySelectorAll(".station-data-item");
+
+        const bounds = [];
+
+        stationElements.forEach(element => {
+            const name = element.dataset.name;
+            const latitude = Number(element.dataset.latitude);
+            const longitude = Number(element.dataset.longitude);
+
+            if (
+                !Number.isNaN(latitude) &&
+                !Number.isNaN(longitude)
+            ) {
+                const stationMatch = [...document.querySelectorAll(".station-card")]
+                    .find(card => {
+                        const title = card.querySelector(".station-info h3");
+                        return title && title.textContent.trim() === name.trim();
+                    });
+
+                const stationUrl = stationMatch
+                    ? stationMatch.getAttribute("href")
+                    : null;
+
+                const popupContent = stationUrl
+                    ? `<a class="map-popup-link" href="${stationUrl}">
+                           <span class="map-popup-icon">🚉</span>
+                           <span>
+                               <strong>${name}</strong>
+                               <small>역 기록 보기 →</small>
+                           </span>
+                       </a>`
+                    : `<strong>🚉 ${name}</strong>`;
+
+                const marker = L.marker([latitude, longitude])
+                    .addTo(map)
+                    .bindPopup(popupContent);
+
+                bounds.push([latitude, longitude]);
+            }
+        });
+
+        if (bounds.length > 1) {
+            map.fitBounds(bounds, {
+                padding: [35, 35],
+                maxZoom: 13
+            });
+        } else if (bounds.length === 1) {
+            map.setView(bounds[0], 14);
+        }
+
+        setTimeout(() => map.invalidateSize(), 150);
+    }
+        const scrollHeader = document.getElementById("scrollHeader");
+
+    window.addEventListener("scroll", () => {
+
+        if (window.scrollY > 120) {
+            scrollHeader.classList.add("is-visible");
+        } else {
+            scrollHeader.classList.remove("is-visible");
+        }
+
+    });
+</script>
+
+
+
+
+</body>
+</html>
