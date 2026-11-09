@@ -299,30 +299,9 @@
 
     </section>
 
-    <section class="account-danger-zone" id="account-delete">
-        <h2>계정 삭제</h2>
-        <p>계정과 저장된 방문 기록, 개인 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.</p>
-
-        {% if delete_error %}
-        <p class="account-delete-error" role="alert">비밀번호가 맞지 않습니다. 다시 확인해 주세요.</p>
-        {% endif %}
-
-        <form method="POST" action="{{ url_for('delete_account') }}"
-              onsubmit="return confirm('계정과 모든 기록을 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <label for="delete-account-password">확인을 위해 현재 비밀번호를 입력하세요</label>
-            <input id="delete-account-password" type="password" name="password"
-                   autocomplete="current-password" required>
-            <button type="submit">계정과 모든 기록 삭제</button>
-        </form>
-    </section>
 
 </main>
 
-<form method="POST" action="{{ url_for('logout') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit">로그아웃</button>
-</form>
 
 </body>
 

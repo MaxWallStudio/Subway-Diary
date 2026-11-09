@@ -164,24 +164,28 @@ migrate_old_uploads()
 
 def is_logged_in():
     user_id = session.get("user_id")
-    if user_id is None:
-        return False
+    if user_id is not None:
+        conn = get_db()
+        try:
+            user = conn.execute(
+                "SELECT 1 FROM users WHERE id = ?",
+                (user_id,)
+            ).fetchone()
+        finally:
+            conn.close()
+        if user:
+            return True
 
-    # Account deletion also invalidates signed session cookies on other devices.
-    conn = get_db()
-    try:
-        user = conn.execute(
-            "SELECT 1 FROM users WHERE id = ?",
-            (user_id,)
-        ).fetchone()
-    finally:
-        conn.close()
-
-    if not user:
-        session.clear()
-        return False
-
-    return True
+    # Each browser gets its own private diary without a sign-in screen.
+    session.clear()
+    for _ in range(3):
+        username = "diary_" + secrets.token_hex(16)
+        user_id = create_user(username, secrets.token_urlsafe(48))
+        if user_id is not None:
+            session["user_id"] = user_id
+            session["username"] = "나의 일기"
+            return True
+    return False
 
 # =========================================================
 # CSRF 보호
@@ -220,6 +224,44 @@ def inject_csrf_token():
     return {
         "csrf_token": get_csrf_token()
     }
+
+
+@app.route("/service-worker.js")
+def service_worker():
+    response = send_file(
+        Path(app.static_folder) / "service-worker.js",
+        mimetype="application/javascript",
+        max_age=0
+    )
+    response.headers["Service-Worker-Allowed"] = (request.script_root.rstrip("/") + "/")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@app.after_request
+def add_pwa_links(response):
+    if response.mimetype != "text/html" or request.method != "GET":
+        return response
+
+    html = response.get_data(as_text=True)
+    head_addition = (
+        f'<link rel="manifest" href="{url_for("static", filename="manifest.webmanifest")}">'
+        '<meta name="theme-color" content="#f3f5f7">'
+        '<meta name="mobile-web-app-capable" content="yes">'
+        '<meta name="apple-mobile-web-app-capable" content="yes">'
+        f'<link rel="apple-touch-icon" href="{url_for("static", filename="images/diary-icon.svg")}">'
+    )
+    script_addition = (
+        f'<script src="{url_for("static", filename="js/pwa-register.js")}" '
+        f'data-worker="{url_for("service_worker")}" '
+        f'data-scope="{(request.script_root.rstrip("/") + "/") or "/"}" defer></script>'
+    )
+    if "</head>" in html and "manifest.webmanifest" not in html:
+        html = html.replace("</head>", head_addition + "</head>", 1)
+    if "</body>" in html and "pwa-register.js" not in html:
+        html = html.replace("</body>", script_addition + "</body>", 1)
+    response.set_data(html)
+    return response
 
 # =========================================================
 # 비공개 사진 제공
@@ -1158,175 +1200,20 @@ def report():
 # =========================================================
 
 @app.route("/login", methods=["GET", "POST"])
-@limiter.limit("5 per minute")
 def login():
+    return redirect(url_for("home"))
 
-    if request.method == "POST":
-
-        # CSRF 검사
-        if not validate_csrf_token():
-            return render_template(
-                "login.html",
-                error="잘못된 요청입니다. 페이지를 새로고침해주세요."
-            )
-
-        username = request.form.get(
-            "username",
-            ""
-        ).strip()
-
-        password = request.form.get(
-            "password",
-            ""
-        )
-
-        user = check_user_password(
-            username,
-            password
-        )
-
-        if user is None:
-
-            return render_template(
-                "login.html",
-                error="아이디 또는 비밀번호가 올바르지 않습니다."
-            )
-
-        # 기존 세션을 완전히 초기화한 후
-        # 새로운 로그인 세션 생성
-        session.clear()
-
-        session["user_id"] = user["id"]
-        session["username"] = user["username"]
-
-        return redirect(
-            url_for("home")
-        )
-
-    return render_template(
-        "login.html",
-        account_deleted=request.args.get("account_deleted") == "1"
-    )
-
-
-# =========================================================
-# 로그아웃
-# =========================================================
 
 @app.route("/logout", methods=["POST"])
 def logout():
-    if not is_logged_in():
-        return redirect(url_for("login"))
-
-    if not validate_csrf_token():
-        return jsonify({"error": "잘못된 요청입니다."}), 403
-
     session.clear()
+    return redirect(url_for("home"))
 
-    return redirect(url_for("login"))
-
-
-# =========================================================
-# 회원가입
-# =========================================================
 
 @app.route("/register", methods=["GET", "POST"])
-@limiter.limit("3 per day")
 def register():
+    return redirect(url_for("home"))
 
-    if request.method == "POST":
-
-        # CSRF 검사
-        if not validate_csrf_token():
-            return render_template(
-                "register.html",
-                error="잘못된 요청입니다. 페이지를 새로고침해주세요."
-            )
-
-        username = request.form.get(
-            "username",
-            ""
-        ).strip()
-
-        password = request.form.get(
-            "password",
-            ""
-        )
-
-        privacy_agree = request.form.get(
-            "privacy_agree"
-        )
-
-        # 기본 입력 확인
-        if not username or not password:
-
-            return render_template(
-                "register.html",
-                error="아이디와 비밀번호를 입력해주세요."
-            )
-
-        # 개인정보 처리방침 동의 확인
-        if privacy_agree != "on":
-
-            return render_template(
-                "register.html",
-                error="개인정보 처리방침에 동의해주세요."
-            )
-
-        # 아이디 길이
-        if len(username) < 3:
-
-            return render_template(
-                "register.html",
-                error="아이디는 3자 이상이어야 합니다."
-            )
-
-        # 비밀번호 길이
-        if len(password) < 8:
-
-            return render_template(
-                "register.html",
-                error="비밀번호는 8자 이상이어야 합니다."
-            )
-
-        # 중복 아이디
-        if get_user_by_username(username):
-
-            return render_template(
-                "register.html",
-                error="이미 사용 중인 아이디입니다."
-            )
-
-        user_id = create_user(
-            username,
-            password
-        )
-
-        if user_id is None:
-
-            return render_template(
-                "register.html",
-                error="회원가입에 실패했습니다."
-            )
-
-        # 회원가입 직후 자동 로그인
-        session.clear()
-
-        session["user_id"] = user_id
-        session["username"] = username
-
-        return redirect(
-            url_for("home")
-        )
-
-    return render_template(
-        "register.html"
-    )
-
-
-# =========================================================
-# 개인정보 처리방침
-# =========================================================
 
 @app.route("/privacy")
 def privacy():
