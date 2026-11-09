@@ -1,6 +1,7 @@
  (async () => {
   const KEY = "station-diary.entries.v1";
   const entries = read();
+  let previewUrl = "";
   const allStations = await fetch("./data/stations.json").then(response => response.json()).catch(() => [...document.querySelectorAll(".station-card")].map(card => {
     const id = Number((card.getAttribute("href") || "").match(/station-(\d+)/)?.[1]);
     return { id, name: card.querySelector(".station-info h3")?.textContent.trim() || "", line: card.dataset.line || "" };
@@ -9,7 +10,7 @@
   const dialog = document.createElement("main");
   dialog.id = "diary-dialog";
   dialog.hidden = true;
-  dialog.innerHTML = `<form method="dialog" class="diary-modal"><button class="diary-close" aria-label="닫기">×</button><p class="diary-kicker">MY SUBWAY MEMORIES</p><h2 class="diary-title"></h2><div class="diary-visits"></div><div class="diary-form"><label>방문 날짜<input name="date" type="date" required></label><label>오늘의 기분<input name="emotion" maxlength="30" placeholder="예: 설렘, 편안함"></label><label>오늘의 기록<textarea name="diary" rows="4" placeholder="이 역에서의 기억을 적어 보세요"></textarea></label><button class="diary-save" type="button">기록 저장</button></div><div class="diary-tools" hidden><p class="diary-empty"></p><button type="button" class="diary-backup">기록 백업</button><label class="diary-restore">백업 불러오기<input type="file" accept="application/json"></label></div></form>`;
+  dialog.innerHTML = `<form method="dialog" class="diary-modal"><button class="diary-close" aria-label="닫기">×</button><p class="diary-kicker">MY SUBWAY MEMORIES</p><h2 class="diary-title"></h2><div class="diary-visits"></div><div class="diary-form"><label>방문 날짜<input name="date" type="date" required></label><label>오늘의 기분<input name="emotion" maxlength="30" placeholder="예: 설렘, 편안함"></label><label>오늘의 기록<textarea name="diary" rows="4" placeholder="이 역에서의 기억을 적어 보세요"></textarea></label><label class="diary-photo-field">오늘의 사진<input name="photo" type="file" accept="image/*" capture="environment"><span>사진을 선택하거나 촬영하세요</span></label><img class="diary-photo-preview" alt="선택한 사진 미리보기" hidden><button class="diary-save" type="button">기록 저장</button></div><div class="diary-tools" hidden><p class="diary-empty"></p><button type="button" class="diary-backup">기록 백업</button><label class="diary-restore">백업 불러오기<input type="file" accept="application/json"></label></div></form>`;
   document.body.append(dialog);
   dialog.querySelector(".diary-close").type = "button";
   dialog.querySelector(".diary-close").textContent = "← 홈으로";
@@ -38,7 +39,36 @@
   }
   function localDate() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; }
   function esc(value) { return String(value).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
-  function persist() { localStorage.setItem(KEY, JSON.stringify(entries)); refresh(); }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(entries)); refresh(); return true; }
+    catch { alert("저장 공간이 부족해요. 사진 크기를 줄이거나 기존 기록을 백업해 주세요."); return false; }
+  }
+  function photoMarkup(photo) {
+    if (typeof photo !== "string" || !/^data:image\/jpeg;base64,/.test(photo)) return "";
+    return `<img class="diary-photo" src="${esc(photo)}" alt="기록에 첨부한 사진">`;
+  }
+  async function compressPhoto(file) {
+    if (!file) return "";
+    if (!file.type.startsWith("image/")) throw new Error("이미지 파일을 선택해 주세요.");
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1200 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.68));
+    if (!blob) throw new Error("사진을 처리하지 못했어요.");
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("사진을 읽지 못했어요."));
+      reader.readAsDataURL(blob);
+    });
+  }
   function visitsFor(id) { return Array.isArray(entries[id]) ? entries[id] : []; }
   function refresh() {
     const visited = Object.keys(entries).filter(id => visitsFor(id).length).length;
@@ -70,7 +100,7 @@
       section = document.createElement("section"); section.className = "memory-today-section";
       const map = document.querySelector(".map-section"); map?.before(section);
     }
-    section.innerHTML = `<div class="section-title"><h2>오늘의 추억</h2><span>${todayVisits.length}개의 기록</span></div><div class="today-memory-list">${todayVisits.slice(0, 5).map(v => `<article class="today-memory-card"><div class="today-memory-date">${esc(v.date)}</div><h3>🚉 ${esc(v.station.name)}</h3>${v.emotion ? `<div class="today-memory-emotion">${esc(v.emotion)}</div>` : ""}<p>${esc(v.diary || "남겨둔 일기가 없어요.")}</p></article>`).join("")}</div>`;
+    section.innerHTML = `<div class="section-title"><h2>오늘의 추억</h2><span>${todayVisits.length}개의 기록</span></div><div class="today-memory-list">${todayVisits.slice(0, 5).map(v => `<article class="today-memory-card"><div class="today-memory-date">${esc(v.date)}</div><h3>🚉 ${esc(v.station.name)}</h3>${v.emotion ? `<div class="today-memory-emotion">${esc(v.emotion)}</div>` : ""}<p>${esc(v.diary || "남겨둔 일기가 없어요.")}</p>${photoMarkup(v.photo)}</article>`).join("")}</div>`;
   }
   function renderMap() {
     if (!window.diaryMap || !window.L) return;
@@ -99,7 +129,7 @@
     dialog.querySelector(".diary-form").hidden = true;
     dialog.querySelector(".diary-tools").hidden = true;
     const visits = visitsFor(id);
-    dialog.querySelector(".diary-visits").innerHTML = `${visits.length ? `<h3>나의 추억 · ${visits.length}개</h3>${[...visits].reverse().map((v, i) => `<article class="diary-entry"><div><b>${esc(v.date)}</b>${v.emotion ? ` · ${esc(v.emotion)}` : ""}</div><p>${esc(v.diary || "기록한 메모가 없어요.")}</p><button type="button" class="diary-delete" data-index="${visits.length - 1 - i}">삭제</button></article>`).join("")}` : `<p class="diary-empty">아직 기록이 없어요.</p>`}<a class="diary-write-link" href="./record.html?id=${id}">이 역의 기록 작성하기</a>`;
+    dialog.querySelector(".diary-visits").innerHTML = `${visits.length ? `<h3>나의 추억 · ${visits.length}개</h3>${[...visits].reverse().map((v, i) => `<article class="diary-entry"><div><b>${esc(v.date)}</b>${v.emotion ? ` · ${esc(v.emotion)}` : ""}</div><p>${esc(v.diary || "기록한 메모가 없어요.")}</p>${photoMarkup(v.photo)}<button type="button" class="diary-delete" data-index="${visits.length - 1 - i}">삭제</button></article>`).join("")}` : `<p class="diary-empty">아직 기록이 없어요.</p>`}<a class="diary-write-link" href="./record.html?id=${id}"><span>✎</span><span>이 역의 기록 작성하기<small>오늘의 기억과 사진을 남겨보세요</small></span><span class="diary-write-arrow">→</span></a>`;
     dialog.querySelectorAll(".diary-delete").forEach(button => button.addEventListener("click", () => {
       const list = visitsFor(id); list.splice(Number(button.dataset.index), 1); if (!list.length) delete entries[id]; persist(); showStation(id);
     }));
@@ -135,8 +165,20 @@
     dialog.querySelector(".diary-form").hidden = false;
     dialog.querySelector(".diary-tools").hidden = true;
     dialog.querySelector("[name=date]").value = localDate();
+    dialog.querySelector("[name=photo]").value = "";
+    dialog.querySelector(".diary-photo-preview").hidden = true;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = "";
     dialog.showModal();
   }
+  dialog.querySelector("[name=photo]").addEventListener("change", event => {
+    const file = event.target.files[0];
+    const preview = dialog.querySelector(".diary-photo-preview");
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = file ? URL.createObjectURL(file) : "";
+    preview.src = previewUrl;
+    preview.hidden = !previewUrl;
+  });
   dialog.querySelector(".diary-backup").addEventListener("click", () => {
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({ version: 1, entries }, null, 2)], { type: "application/json" })); a.download = "station-diary-backup.json"; a.click(); URL.revokeObjectURL(a.href);
   });
@@ -146,12 +188,20 @@
     event.target.value = "";
   });
   dialog.addEventListener("close", () => { dialog.querySelector(".diary-form").hidden = false; dialog.querySelector(".diary-tools").hidden = true; });
-  dialog.querySelector(".diary-save").addEventListener("click", () => {
+  dialog.querySelector(".diary-save").addEventListener("click", async () => {
     const id = Number(dialog.dataset.stationId); if (!id) return;
     const form = dialog.querySelector(".diary-form"), date = form.querySelector("[name=date]").value;
     const diary = form.querySelector("[name=diary]").value.trim(), emotion = form.querySelector("[name=emotion]").value.trim();
     if (!date) return;
-    (entries[id] ||= []).push({ date, diary, emotion }); persist(); window.location.href = `./station.html?id=${id}`;
+    const button = dialog.querySelector(".diary-save");
+    button.disabled = true;
+    try {
+      const photo = await compressPhoto(form.querySelector("[name=photo]").files[0]);
+      (entries[id] ||= []).push({ date, diary, emotion, photo });
+      if (!persist()) { entries[id].pop(); return; }
+      window.location.href = `./station.html?id=${id}`;
+    } catch (error) { alert(error.message || "사진을 저장하지 못했어요."); }
+    finally { button.disabled = false; }
   });
   const page = document.body.dataset.page;
   if (page === "station") showStation(Number(new URLSearchParams(location.search).get("id")));
