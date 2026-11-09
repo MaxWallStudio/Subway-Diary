@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ station["name"] }} - Station Diary</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+
+<body
+    class="theme-{{ theme or 'default' }}"
+    data-station-id="{{ station['id'] }}"
+>
+
+    <main class="station-page">
+
+        <!-- 상단 -->
+        <header class="station-header">
+
+            <div>
+                <p class="station-line">
+                    {% for line in lines %}
+                        <span>{{ line["line"] }}</span>
+                    {% endfor %}
+                </p>
+
+                <h1>
+                    🚉 {{ station["name"] }}
+                </h1>
+
+
+                {% if is_favorite %}
+                <button
+                    class="favorite-station-button active"
+                    onclick="removeFavorite()"
+                >
+                    ⭐ 최애역
+                </button>
+                {% else %}
+                <button
+                    class="favorite-station-button"
+                    onclick="setFavorite()"
+                >
+                    ☆ 최애역으로 설정
+                </button>
+                {% endif %}
+
+
+
+
+
+
+
+
+
+
+                <div class="station-stats">
+
+                    <div class="stat-card">
+                        <span>🚶 방문 횟수</span>
+                        <strong>{{ stats["visit_count"] }}회</strong>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>🌱 첫 방문</span>
+                        <strong>
+                            {{ stats["first_visit"] or "아직 없음" }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>🕰️ 마지막 방문</span>
+                        <strong>
+                            {{ stats["last_visit"] or "아직 없음" }}
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div class="theme-selector">
+
+                    <span class="theme-label">
+                        🎨 역 분위기
+                    </span>
+
+                    <button
+                        type="button"
+                        data-theme="default"
+                        class="{% if theme == 'default' %}is-selected{% endif %}"
+                        aria-pressed="{{ 'true' if theme == 'default' else 'false' }}"
+                        onclick="changeTheme('default')"
+                    >
+                        기본
+                    </button>
+
+                    <button
+                        type="button"
+                        data-theme="forest"
+                        class="{% if theme == 'forest' %}is-selected{% endif %}"
+                        aria-pressed="{{ 'true' if theme == 'forest' else 'false' }}"
+                        onclick="changeTheme('forest')"
+                    >
+                        🌿 숲
+                    </button>
+
+                    <button
+                        type="button"
+                        data-theme="ocean"
+                        class="{% if theme == 'ocean' %}is-selected{% endif %}"
+                        aria-pressed="{{ 'true' if theme == 'ocean' else 'false' }}"
+                        onclick="changeTheme('ocean')"
+                    >
+                        🌊 바다
+                    </button>
+
+                    <button
+                        type="button"
+                        data-theme="night"
+                        class="{% if theme == 'night' %}is-selected{% endif %}"
+                        aria-pressed="{{ 'true' if theme == 'night' else 'false' }}"
+                        onclick="changeTheme('night')"
+                    >
+                        🌙 밤
+                    </button>
+
+                    <button
+                        type="button"
+                        data-theme="cherry"
+                        class="{% if theme == 'cherry' %}is-selected{% endif %}"
+                        aria-pressed="{{ 'true' if theme == 'cherry' else 'false' }}"
+                        onclick="changeTheme('cherry')"
+                    >
+                        🌸 벚꽃
+                    </button>
+
+                    <button
+                        type="button"
+                        data-theme="sunset"
+                        class="{% if theme == 'sunset' %}is-selected{% endif %}"
+                        aria-pressed="{{ 'true' if theme == 'sunset' else 'false' }}"
+                        onclick="changeTheme('sunset')"
+                    >
+                        🌅 노을
+                    </button>
+
+                </div>
+
+            </div>
+
+            <a
+                class="back-button"
+                href="{{ url_for('home') }}"
+            >
+                ← 역 목록
+            </a>
+
+        </header>
+
+
+        <!-- 방문 기록 추가 -->
+        <section class="add-section">
+
+            <a
+                class="add-button"
+                href="{{ url_for('add_visit', station_id=station['id']) }}"
+            >
+                <span>＋</span>
+                새로운 방문 기록
+            </a>
+
+        </section>
+
+
+        <!-- 방문 기록 -->
+        <section class="memory-section">
+
+            <div class="section-title">
+
+                <h2>
+                    나의 추억
+                </h2>
+
+                <span>
+                    {{ visits|length }}개의 기록
+                </span>
+
+            </div>
+
+
+            {% if visits %}
+
+                <div class="memory-list">
+
+                    {% for visit in visits %}
+
+                        <article class="memory-card">
+
+                            <!-- 사진 -->
+                            {% if visit["photo"] %}
+
+                                <div class="memory-photo">
+
+                                    <img
+                                        src="{{ url_for(
+                                            'private_upload',
+                                            filename=visit['photo']
+                                        ) }}"
+                                        alt="방문 사진"
+                                    >
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- 내용 -->
+                            <div class="memory-content">
+
+                                <div class="memory-top">
+
+                                    <span class="memory-date">
+                                        {{ visit["visited_at"] }}
+                                    </span>
+
+
+                                    <!-- 즐겨찾기 -->
+                                    <button
+                                        class="favorite-button"
+                                        type="button"
+                                        data-visit-id="{{ visit['id'] }}"
+                                        onclick="toggleFavorite(this)"
+                                        aria-label="즐겨찾기"
+                                    >
+                                        {% if visit["favorite"] %}
+                                            ⭐
+                                        {% else %}
+                                            ☆
+                                        {% endif %}
+                                    </button>
+
+                                    <button
+                                        class="delete-memory-button"
+                                        type="button"
+                                        data-visit-id="{{ visit['id'] }}"
+                                        onclick="deleteMemory(this)"
+                                        aria-label="이 추억 삭제"
+                                        title="이 추억 삭제"
+                                    >
+                                        삭제
+                                    </button>
+
+                                </div>
+
+
+                                <!-- 감정 -->
+                                <div class="emotion">
+                                    {{ visit["emotion"] }}
+                                </div>
+
+
+                                <!-- 일기 -->
+                                {% if visit["diary"] %}
+
+                                    <p class="diary-text">{{ visit["diary"] }}</p>
+
+                                {% else %}
+
+                                    <p class="empty-diary">
+                                        작성한 일기가 없습니다.
+                                    </p>
+
+                                {% endif %}
+
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+
+            {% else %}
+
+                <!-- 기록이 없을 때 -->
+                <div class="empty">
+
+                    <div class="empty-icon">
+                        📖
+                    </div>
+
+                    <h3>
+                        아직 추억이 없어요
+                    </h3>
+
+                    <p>
+                        이 역에서의 첫 번째 추억을 기록해보세요.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+
+    <!-- 즐겨찾기 -->
+<script>
+async function deleteMemory(button) {
+    if (!confirm("이 추억을 삭제할까요? 삭제한 기록은 되돌릴 수 없습니다.")) return;
+
+    try {
+        const response = await fetch(`/visit/${button.dataset.visitId}/delete`, {
+            method: "POST",
+            headers: { "X-CSRF-Token": "{{ csrf_token }}" }
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "삭제하지 못했습니다.");
+        button.closest(".memory-card").remove();
+        location.reload();
+    } catch (error) {
+        alert(error.message || "추억 삭제 중 오류가 발생했습니다.");
+    }
+}
+
+async function toggleFavorite(button) {
+
+    const visitId = button.dataset.visitId;
+
+    try {
+
+        const response = await fetch(
+            `/visit/${visitId}/favorite`,
+            {
+                method: "POST",
+                headers: {
+                    "X-CSRF-Token": "{{ csrf_token }}"
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("즐겨찾기 저장 실패");
+        }
+
+        const data = await response.json();
+
+        if (data.favorite) {
+            button.textContent = "⭐";
+        } else {
+            button.textContent = "☆";
+        }
+
+    } catch (error) {
+
+        console.error(error);
+        alert("즐겨찾기를 저장하지 못했습니다.");
+
+    }
+}
+</script>
+
+<script>
+
+async function changeTheme(theme) {
+
+    const stationId =
+        document.body.dataset.stationId;
+
+    const url =
+        "/station/" + stationId + "/theme";
+
+    console.log("테마 저장 요청:", url, theme);
+
+    try {
+
+        const response = await fetch(
+            url,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": "{{ csrf_token }}"
+                },
+
+                body: JSON.stringify({
+                    theme: theme
+                })
+            }
+        );
+
+        console.log(
+            "서버 응답:",
+            response.status
+        );
+
+
+        const text =
+            await response.text();
+
+        console.log(
+            "응답 내용:",
+            text
+        );
+
+
+        if (!response.ok) {
+
+            alert(
+                "테마 저장 실패\n" +
+                response.status +
+                "\n" +
+                text
+            );
+
+            return;
+        }
+
+
+        location.reload();
+
+    } catch (error) {
+
+        console.error(
+            "테마 요청 오류:",
+            error
+        );
+
+        alert(
+            "테마 저장 요청 중 오류가 발생했습니다.\n\n" +
+            error
+        );
+
+    }
+
+}
+
+</script>
+
+<script>
+async function setFavorite() {
+    await updateFavorite(
+        "{{ url_for('set_favorite', station_id=station['id']) }}"
+    );
+}
+
+async function removeFavorite() {
+    await updateFavorite("{{ url_for('remove_favorite') }}");
+}
+
+async function updateFavorite(url) {
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRF-Token": "{{ csrf_token }}"
+            }
+        });
+
+        if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            throw new Error(result.error || "최애 역 저장에 실패했습니다.");
+        }
+
+        location.reload();
+    } catch (error) {
+        console.error("최애 역 업데이트 실패:", error);
+        alert(error.message || "최애 역을 변경하지 못했습니다.");
+    }
+}
+</script>
+
+</body>
+
+</html>
+

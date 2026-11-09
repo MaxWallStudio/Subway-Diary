@@ -1,0 +1,1 @@
+{"name":"Station Diary","short_name":"Diary","description":"지나온 지하철역과 추억을 기록하는 나만의 일기장","lang":"ko","start_url":"./","scope":"./","display":"standalone","background_color":"#f3f5f7","theme_color":"#f3f5f7","icons":[{"src":"./static/images/diary-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

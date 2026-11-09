@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>내 프로필 - Station Diary</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+<main class="profile-page">
+
+    <!-- 헤더 -->
+
+    <header class="profile-header">
+
+        <a
+            href="{{ url_for('home') }}"
+            class="back-button"
+        >
+            ← 돌아가기
+        </a>
+
+        <div class="profile-avatar">
+            🚇
+        </div>
+
+        <h1>Station Diary</h1>
+
+        <p class="profile-description">
+            나의 지하철 이야기를 기록하고 있어요.
+        </p>
+
+    </header>
+
+
+    <!-- 기본 통계 -->
+
+    <section class="profile-stats">
+
+        <div class="profile-stat">
+            <strong>
+                {{ stats["visited_stations"] }}
+            </strong>
+
+            <span>
+                방문한 역
+            </span>
+        </div>
+
+
+        <div class="profile-stat">
+            <strong>
+                {{ stats["total_visits"] }}
+            </strong>
+
+            <span>
+                총 방문
+            </span>
+        </div>
+
+
+        <div class="profile-stat">
+            <strong>
+                {{ stats["total_photos"] }}
+            </strong>
+
+            <span>
+                사진
+            </span>
+        </div>
+
+
+        <div class="profile-stat">
+            <strong>
+                {{ stats["total_memories"] }}
+            </strong>
+
+            <span>
+                추억
+            </span>
+        </div>
+
+    </section>
+
+
+    <!-- 최애역 -->
+
+    <section class="favorite-station-card">
+
+        <div class="section-label">
+            ⭐ MY FAVORITE STATION
+        </div>
+
+        {% if favorite_station %}
+
+        <a
+            href="{{ url_for('station_detail', station_id=favorite_station['id']) }}"
+            class="favorite-station-link"
+        >
+
+            <div class="favorite-station-main">
+
+                <div class="favorite-station-icon">
+                    🚇
+                </div>
+
+                <div>
+                    <h2>
+                        {{ favorite_station["name"] }}
+                    </h2>
+
+                    <p>
+                        나의 최애역
+                    </p>
+                </div>
+
+            </div>
+
+            <span class="favorite-arrow">
+                →
+            </span>
+
+        </a>
+
+        {% else %}
+
+        <div class="favorite-empty">
+
+            <div class="favorite-station-icon">
+                ⭐
+            </div>
+
+            <div>
+                <h2>
+                    아직 최애역이 없어요
+                </h2>
+
+                <p>
+                    마음에 드는 역을 최애역으로 설정해보세요.
+                </p>
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- 기록 기간 -->
+
+    {% if stats["first_visit"] %}
+
+    <section class="profile-period">
+
+        <div>
+
+            <span>
+                기록 시작
+            </span>
+
+            <strong>
+                {{ stats["first_visit"][:10] }}
+            </strong>
+
+        </div>
+
+
+        <div class="period-line"></div>
+
+
+        <div>
+
+            <span>
+                최근 기록
+            </span>
+
+            <strong>
+                {{ stats["last_visit"][:10] }}
+            </strong>
+
+        </div>
+
+    </section>
+
+    {% endif %}
+
+
+    <!-- 앞으로 추가될 기능 -->
+
+    <section class="profile-menu">
+
+        <a
+            href="{{ url_for('collection') }}"
+            class="profile-menu-item"
+        >
+
+            <div>
+
+                <span class="menu-icon">
+                    🏆
+                </span>
+
+                <div>
+
+                    <strong>
+                        역 도감
+                    </strong>
+
+                    <p>
+                        내가 방문한 역들을 한눈에
+                    </p>
+
+                </div>
+
+            </div>
+
+            <span>
+                →
+            </span>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('journey') }}"
+            class="profile-menu-item"
+        >
+
+            <div>
+
+                <span class="menu-icon">
+                    🌎
+                </span>
+
+                <div>
+
+                    <strong>
+                        나의 지하철 여정
+                    </strong>
+
+                    <p>
+                        총 이동 거리와 지구 몇 바퀴인지 확인
+                    </p>
+
+                </div>
+
+            </div>
+
+            <span>
+                →
+            </span>
+
+        </a>
+
+
+        <a
+            href="{{ url_for('report') }}"
+            class="profile-menu-item"
+        >
+
+            <div>
+
+                <span class="menu-icon">
+                    📊
+                </span>
+
+                <div>
+
+                    <strong>
+                        월별 · 연별 결산
+                    </strong>
+
+                    <p>
+                        나의 지하철 생활을 돌아보기
+                    </p>
+
+                </div>
+
+            </div>
+
+            <span>
+                →
+            </span>
+
+        </a>
+
+    </section>
+
+    <section class="account-danger-zone" id="account-delete">
+        <h2>계정 삭제</h2>
+        <p>계정과 저장된 방문 기록, 개인 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.</p>
+
+        {% if delete_error %}
+        <p class="account-delete-error" role="alert">비밀번호가 맞지 않습니다. 다시 확인해 주세요.</p>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('delete_account') }}"
+              onsubmit="return confirm('계정과 모든 기록을 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label for="delete-account-password">확인을 위해 현재 비밀번호를 입력하세요</label>
+            <input id="delete-account-password" type="password" name="password"
+                   autocomplete="current-password" required>
+            <button type="submit">계정과 모든 기록 삭제</button>
+        </form>
+    </section>
+
+</main>
+
+<form method="POST" action="{{ url_for('logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit">로그아웃</button>
+</form>
+
+</body>
+
+</html>
