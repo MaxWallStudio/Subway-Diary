@@ -43,11 +43,11 @@ def main() -> None:
         if endpoint == "static":
             return "./static/" + str(values.get("filename", ""))
         if endpoint == "station_detail":
-            return f"#station-{values['station_id']}"
+            return f"./station.html?id={values['station_id']}"
         if endpoint == "collection":
-            return "#collection"
+            return "./collection.html"
         if endpoint == "profile":
-            return "#profile"
+            return "./profile.html"
         return "./"
 
     template_source = (ROOT / "templates" / "index.html").read_text(encoding="utf-8")
@@ -96,8 +96,24 @@ def main() -> None:
 
     OUT.mkdir(exist_ok=True)
     (OUT / "index.html").write_text(rendered, encoding="utf-8")
+    page_env = Environment(autoescape=select_autoescape(["html"]))
+    page_template = page_env.from_string('''<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f3f5f7"><title>{{ title }} | 지하철 일기</title>
+<link rel="stylesheet" href="./static/css/style.css"><link rel="stylesheet" href="./static/css/pages.css"></head>
+<body data-page="{{ page }}"{% if station_id %} data-station-id="{{ station_id }}"{% endif %}>
+<script src="./static/js/diary.js"></script></body></html>''')
+    for page, title in (("collection", "방문 기록"), ("profile", "내 기록"),
+                        ("station", "역 기록"), ("record", "기록 작성")):
+        (OUT / f"{page}.html").write_text(
+            page_template.render(page=page, title=title, station_id=None), encoding="utf-8"
+        )
+    # Remove the per-station files from earlier builds; station.html handles ids in its query string.
+    for old_page in OUT.glob("station-[0-9]*.html"):
+        old_page.unlink()
     shutil.copytree(ROOT / "static" / "css", OUT / "static" / "css", dirs_exist_ok=True)
-    shutil.copytree(ROOT / "static" / "js", OUT / "static" / "js", dirs_exist_ok=True)
+    shutil.copytree(ROOT / "static" / "js", OUT / "static" / "js", dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns("pwa-register.js"))
     shutil.copytree(ROOT / "static" / "images", OUT / "static" / "images", dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns("*.mdp"))
     (OUT / "data").mkdir(exist_ok=True)

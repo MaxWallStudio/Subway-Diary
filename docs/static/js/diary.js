@@ -1,16 +1,28 @@
-(() => {
+ (async () => {
   const KEY = "station-diary.entries.v1";
   const entries = read();
-  const allStations = [...document.querySelectorAll(".station-card")].map(card => {
+  const allStations = await fetch("./data/stations.json").then(response => response.json()).catch(() => [...document.querySelectorAll(".station-card")].map(card => {
     const id = Number((card.getAttribute("href") || "").match(/station-(\d+)/)?.[1]);
     return { id, name: card.querySelector(".station-info h3")?.textContent.trim() || "", line: card.dataset.line || "" };
-  }).filter(station => station.id);
+  }).filter(station => station.id));
   const colors = { "1호선":"#0052a4", "2호선":"#00a84d", "3호선":"#ef7c1c", "4호선":"#00a5de", "5호선":"#996cac", "6호선":"#cd7c2f", "7호선":"#747f00", "8호선":"#e6186c", "9호선":"#bdb092" };
-  const dialog = document.createElement("dialog");
+  const dialog = document.createElement("main");
   dialog.id = "diary-dialog";
+  dialog.hidden = true;
   dialog.innerHTML = `<form method="dialog" class="diary-modal"><button class="diary-close" aria-label="닫기">×</button><p class="diary-kicker">MY SUBWAY MEMORIES</p><h2 class="diary-title"></h2><div class="diary-visits"></div><div class="diary-form"><label>방문 날짜<input name="date" type="date" required></label><label>오늘의 기분<input name="emotion" maxlength="30" placeholder="예: 설렘, 편안함"></label><label>오늘의 기록<textarea name="diary" rows="4" placeholder="이 역에서의 기억을 적어 보세요"></textarea></label><button class="diary-save" type="button">기록 저장</button></div><div class="diary-tools" hidden><p class="diary-empty"></p><button type="button" class="diary-backup">기록 백업</button><label class="diary-restore">백업 불러오기<input type="file" accept="application/json"></label></div></form>`;
   document.body.append(dialog);
-  dialog.querySelector(".diary-close").addEventListener("click", () => dialog.close());
+  dialog.querySelector(".diary-close").type = "button";
+  dialog.querySelector(".diary-close").textContent = "← 홈으로";
+  dialog.querySelector(".diary-close").addEventListener("click", () => {
+    window.location.href = document.body.dataset.page === "record"
+      ? `./station.html?id=${dialog.dataset.stationId}`
+      : "./index.html";
+  });
+  dialog.showModal = () => {
+    document.querySelectorAll("body > :not(#diary-dialog)").forEach(node => node.hidden = true);
+    dialog.hidden = false;
+    dialog.classList.add("page-open");
+  };
 
   function read() {
     try {
@@ -70,7 +82,7 @@
       const node = document.querySelector(`.station-data-item[data-station-id="${s.id}"]`);
       if (!node) return;
       const point = [Number(node.dataset.latitude), Number(node.dataset.longitude)];
-      L.marker(point).addTo(window.diaryMarkerLayer).bindPopup(`<a href="#station-${s.id}">🚉 ${esc(s.name)}</a>`);
+      L.marker(point).addTo(window.diaryMarkerLayer).bindPopup(`<a href="./station.html?id=${s.id}">🚉 ${esc(s.name)}</a>`);
       bounds.push(point);
     });
     if (bounds.length > 1) window.diaryMap.fitBounds(bounds, { padding:[35,35], maxZoom:13 });
@@ -78,31 +90,32 @@
   }
   function showStation(id) {
     const station = allStations.find(s => s.id === id); if (!station) return;
+    document.title = `${station.name}역 | 지하철 일기`;
     dialog.dataset.stationId = id;
     dialog.querySelector(".diary-title").textContent = `${station.name}역`;
     dialog.querySelector("[name=date]").value = localDate();
     dialog.querySelector("[name=emotion]").value = "";
     dialog.querySelector("[name=diary]").value = "";
+    dialog.querySelector(".diary-form").hidden = true;
+    dialog.querySelector(".diary-tools").hidden = true;
     const visits = visitsFor(id);
-    dialog.querySelector(".diary-visits").innerHTML = visits.length ? `<h3>나의 추억 · ${visits.length}개</h3>${[...visits].reverse().map((v, i) => `<article class="diary-entry"><div><b>${esc(v.date)}</b>${v.emotion ? ` · ${esc(v.emotion)}` : ""}</div><p>${esc(v.diary || "기록한 메모가 없어요.")}</p><button type="button" class="diary-delete" data-index="${visits.length - 1 - i}">삭제</button></article>`).join("")}` : `<p class="diary-empty">아직 기록이 없어요. 이 역의 첫 추억을 남겨 보세요.</p>`;
+    dialog.querySelector(".diary-visits").innerHTML = `${visits.length ? `<h3>나의 추억 · ${visits.length}개</h3>${[...visits].reverse().map((v, i) => `<article class="diary-entry"><div><b>${esc(v.date)}</b>${v.emotion ? ` · ${esc(v.emotion)}` : ""}</div><p>${esc(v.diary || "기록한 메모가 없어요.")}</p><button type="button" class="diary-delete" data-index="${visits.length - 1 - i}">삭제</button></article>`).join("")}` : `<p class="diary-empty">아직 기록이 없어요.</p>`}<a class="diary-write-link" href="./record.html?id=${id}">이 역의 기록 작성하기</a>`;
     dialog.querySelectorAll(".diary-delete").forEach(button => button.addEventListener("click", () => {
       const list = visitsFor(id); list.splice(Number(button.dataset.index), 1); if (!list.length) delete entries[id]; persist(); showStation(id);
     }));
     dialog.showModal();
   }
-  document.querySelectorAll(".station-card").forEach(card => card.addEventListener("click", event => {
-    event.preventDefault(); const id = Number((card.getAttribute("href") || "").match(/station-(\d+)/)?.[1]); showStation(id);
-  }));
-  document.querySelectorAll('a[href="#collection"]').forEach(link => link.addEventListener("click", event => {
-    event.preventDefault(); const visited = allStations.filter(s => visitsFor(s.id).length);
+  function showCollection() {
+    document.title = "방문 기록 | 지하철 일기";
+    const visited = allStations.filter(s => visitsFor(s.id).length);
     dialog.dataset.stationId = "";
     dialog.querySelector(".diary-title").textContent = "내가 방문한 역";
     dialog.querySelector(".diary-visits").innerHTML = visited.length ? visited.map(s => `<article class="diary-entry"><b>${esc(s.line)} · ${esc(s.name)}역</b><p>${visitsFor(s.id).length}개의 추억</p><button type="button" class="diary-open" data-id="${s.id}">기록 보기</button></article>`).join("") : '<p class="diary-empty">아직 방문 기록이 없어요.</p>';
-    dialog.querySelector(".diary-form").hidden = true; dialog.showModal();
-    dialog.querySelectorAll(".diary-open").forEach(b => b.addEventListener("click", () => { dialog.querySelector(".diary-form").hidden = false; showStation(Number(b.dataset.id)); }));
-  }));
-  document.querySelectorAll('a[href="#profile"], .profile-button[href="#profile"]').forEach(link => link.addEventListener("click", event => {
-    event.preventDefault();
+    dialog.querySelector(".diary-form").hidden = true; dialog.querySelector(".diary-tools").hidden = true; dialog.showModal();
+    dialog.querySelectorAll(".diary-open").forEach(b => b.addEventListener("click", () => { window.location.href = `./station.html?id=${b.dataset.id}`; }));
+  }
+  function showProfile() {
+    document.title = "내 기록 | 지하철 일기";
     dialog.dataset.stationId = "";
     const visited = Object.keys(entries).filter(id => visitsFor(id).length).length;
     dialog.querySelector(".diary-title").textContent = "나의 기록";
@@ -110,7 +123,20 @@
     dialog.querySelector(".diary-form").hidden = true;
     const tools = dialog.querySelector(".diary-tools"); tools.hidden = false;
     dialog.showModal();
-  }));
+  }
+  function showRecord(id) {
+    const station = allStations.find(item => item.id === id);
+    if (!station) { window.location.href = "./index.html"; return; }
+    document.title = `${station.name}역 기록 작성 | 지하철 일기`;
+    dialog.dataset.stationId = id;
+    dialog.querySelector(".diary-close").textContent = "← 역 기록으로";
+    dialog.querySelector(".diary-title").textContent = `${station.name}역의 기억`;
+    dialog.querySelector(".diary-visits").hidden = true;
+    dialog.querySelector(".diary-form").hidden = false;
+    dialog.querySelector(".diary-tools").hidden = true;
+    dialog.querySelector("[name=date]").value = localDate();
+    dialog.showModal();
+  }
   dialog.querySelector(".diary-backup").addEventListener("click", () => {
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({ version: 1, entries }, null, 2)], { type: "application/json" })); a.download = "station-diary-backup.json"; a.click(); URL.revokeObjectURL(a.href);
   });
@@ -125,12 +151,13 @@
     const form = dialog.querySelector(".diary-form"), date = form.querySelector("[name=date]").value;
     const diary = form.querySelector("[name=diary]").value.trim(), emotion = form.querySelector("[name=emotion]").value.trim();
     if (!date) return;
-    (entries[id] ||= []).push({ date, diary, emotion }); persist(); showStation(id);
+    (entries[id] ||= []).push({ date, diary, emotion }); persist(); window.location.href = `./station.html?id=${id}`;
   });
-  document.querySelectorAll(".station-group").forEach(group => {
-    const button = group.querySelector(".station-more-button"), list = group.querySelector(".station-list"); if (!button || !list) return;
-    button.addEventListener("click", () => { const open = list.dataset.expanded !== "true"; list.dataset.expanded = String(open); list.style.maxHeight = open ? `${list.scrollHeight}px` : "174px"; button.classList.toggle("is-expanded", open); button.firstChild.textContent = open ? "접기 " : "더보기 "; });
-  });
+  const page = document.body.dataset.page;
+  if (page === "station") showStation(Number(new URLSearchParams(location.search).get("id")));
+  else if (page === "record") showRecord(Number(new URLSearchParams(location.search).get("id")));
+  else if (page === "collection") showCollection();
+  else if (page === "profile") showProfile();
   refresh();
   window.addEventListener("load", () => setTimeout(renderMap, 250));
 })();
