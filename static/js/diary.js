@@ -69,6 +69,37 @@
       reader.readAsDataURL(blob);
     });
   }
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 0) return "확인 불가";
+    if (bytes < 1024) return `${Math.round(bytes)} B`;
+    const units = ["KB", "MB", "GB", "TB"];
+    let value = bytes / 1024, unit = 0;
+    while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit++; }
+    return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
+  }
+  async function updateStorageEstimate(card) {
+    const recordBytes = new Blob([localStorage.getItem(KEY) || ""]).size;
+    card.querySelector("[data-record-size]").textContent = formatBytes(recordBytes);
+    const remainingNode = card.querySelector("[data-storage-remaining]");
+    try {
+      if (!navigator.storage?.estimate) throw new Error("unavailable");
+      const estimate = await navigator.storage.estimate();
+      if (!Number.isFinite(estimate.quota) || estimate.quota <= 0) throw new Error("unavailable");
+      const usage = Number.isFinite(estimate.usage) ? estimate.usage : 0;
+      const remaining = Math.max(0, estimate.quota - usage);
+      const percent = Math.min(100, Math.max(0, usage / estimate.quota * 100));
+      remainingNode.textContent = formatBytes(remaining);
+      card.querySelector("[data-storage-used]").textContent = formatBytes(usage);
+      card.querySelector("[data-storage-quota]").textContent = formatBytes(estimate.quota);
+      card.querySelector(".storage-meter span").style.width = `${percent}%`;
+      card.querySelector(".storage-meter").setAttribute("aria-valuenow", percent.toFixed(1));
+    } catch {
+      remainingNode.textContent = "이 브라우저에서는 확인할 수 없어요";
+      card.querySelector("[data-storage-used]").textContent = "확인 불가";
+      card.querySelector("[data-storage-quota]").textContent = "확인 불가";
+      card.querySelector(".storage-meter span").style.width = "0%";
+    }
+  }
   function visitsFor(id) { return Array.isArray(entries[id]) ? entries[id] : []; }
   function refresh() {
     const visited = Object.keys(entries).filter(id => visitsFor(id).length).length;
@@ -149,9 +180,12 @@
     dialog.dataset.stationId = "";
     const visited = Object.keys(entries).filter(id => visitsFor(id).length).length;
     dialog.querySelector(".diary-title").textContent = "나의 기록";
-    dialog.querySelector(".diary-visits").innerHTML = `<p class="diary-empty">${visited}개 역을 방문하고 ${Object.values(entries).reduce((n, list) => n + (Array.isArray(list) ? list.length : 0), 0)}개의 추억을 기록했어요.</p><p class="diary-empty">기록은 이 브라우저에 저장됩니다. 다른 기기에서도 사용하려면 백업 파일을 옮겨 주세요.</p>`;
+    dialog.querySelector(".diary-visits").innerHTML = `<p class="diary-empty">${visited}개 역을 방문하고 ${Object.values(entries).reduce((n, list) => n + (Array.isArray(list) ? list.length : 0), 0)}개의 추억을 기록했어요.</p><p class="diary-empty">기록은 이 브라우저에 저장됩니다. 다른 기기에서도 사용하려면 백업 파일을 옮겨 주세요.</p><section class="diary-storage-card"><div class="storage-card-heading"><div><h3>사이트 저장 공간</h3><p>현재 브라우저가 제공하는 전체 용량 추정치</p></div><button type="button" class="storage-refresh" aria-label="저장 공간 새로고침">↻</button></div><div class="storage-remaining"><span>남은 공간</span><strong data-storage-remaining>계산 중...</strong></div><div class="storage-meter" role="progressbar" aria-label="사이트 저장 공간 사용량" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><div class="storage-usage"><span>전체 사용 <b data-storage-used>계산 중...</b></span><span>사이트 한도 <b data-storage-quota>계산 중...</b></span><span>내 기록과 사진 <b data-record-size>계산 중...</b></span></div><p class="storage-note">브라우저가 추정한 사이트 전체 용량입니다. 기록·사진뿐 아니라 오프라인 파일도 포함됩니다. 기록 저장에는 별도의 브라우저 한도가 적용될 수 있어 실제 남은 기록 용량과 다를 수 있어요.</p></section>`;
     dialog.querySelector(".diary-form").hidden = true;
     const tools = dialog.querySelector(".diary-tools"); tools.hidden = false;
+    const storageCard = dialog.querySelector(".diary-storage-card");
+    storageCard.querySelector(".storage-refresh").addEventListener("click", () => updateStorageEstimate(storageCard));
+    updateStorageEstimate(storageCard);
     dialog.showModal();
   }
   function showRecord(id) {
