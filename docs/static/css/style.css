@@ -1064,6 +1064,11 @@
     overflow: hidden;
 }
 
+.diary-expandable.is-collapsed { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.diary-expandable.is-expanded { display: block !important; overflow: visible; }
+.diary-expand-toggle { display: inline-flex; margin: 7px 0 0; padding: 4px 0; border: 0; background: transparent; color: #07845e; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
+.today-memory-card .diary-expand-toggle { position: relative; z-index: 1; }
+
 .today-memory-emotion {
     display: inline-block;
 

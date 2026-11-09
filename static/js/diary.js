@@ -39,6 +39,30 @@
   }
   function localDate() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; }
   function esc(value) { return String(value).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
+  function bindExpandableText(root, selector) {
+    root.querySelectorAll(selector).forEach(text => {
+      if (text.dataset.expandReady) return;
+      text.dataset.expandReady = "true";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "diary-expand-toggle";
+      button.textContent = "더보기";
+      button.setAttribute("aria-expanded", "false");
+      text.after(button);
+      text.classList.add("diary-expandable", "is-collapsed");
+      const collapsedHeight = text.getBoundingClientRect().height;
+      text.classList.remove("is-collapsed");
+      const needsToggle = text.getBoundingClientRect().height > collapsedHeight + 1;
+      text.classList.add("is-collapsed");
+      if (!needsToggle) { button.remove(); return; }
+      button.addEventListener("click", () => {
+        const expanded = text.classList.toggle("is-expanded");
+        text.classList.toggle("is-collapsed", !expanded);
+        button.textContent = expanded ? "접기" : "더보기";
+        button.setAttribute("aria-expanded", String(expanded));
+      });
+    });
+  }
   function persist() {
     try { localStorage.setItem(KEY, JSON.stringify(entries)); refresh(); return true; }
     catch { alert("저장 공간이 부족해요. 사진 크기를 줄이거나 기존 기록을 백업해 주세요."); return false; }
@@ -89,6 +113,7 @@
       card.dataset.visited = visitsFor(id).length ? "true" : "false";
     });
     renderToday();
+    bindExpandableText(document, ".today-memory-card p");
     renderMap();
   }
   function renderToday() {
@@ -130,6 +155,7 @@
     dialog.querySelector(".diary-tools").hidden = true;
     const visits = visitsFor(id);
     dialog.querySelector(".diary-visits").innerHTML = `${visits.length ? `<h3>나의 추억 · ${visits.length}개</h3>${[...visits].reverse().map((v, i) => `<article class="diary-entry"><div><b>${esc(v.date)}</b>${v.emotion ? ` · ${esc(v.emotion)}` : ""}</div><p>${esc(v.diary || "기록한 메모가 없어요.")}</p>${photoMarkup(v.photo)}<button type="button" class="diary-delete" data-index="${visits.length - 1 - i}">삭제</button></article>`).join("")}` : `<p class="diary-empty">아직 기록이 없어요.</p>`}<a class="diary-write-link" href="./record.html?id=${id}"><span>✎</span><span>이 역의 기록 작성하기<small>오늘의 기억과 사진을 남겨보세요</small></span><span class="diary-write-arrow">→</span></a>`;
+    bindExpandableText(dialog.querySelector(".diary-visits"), ".diary-entry p");
     dialog.querySelectorAll(".diary-delete").forEach(button => button.addEventListener("click", () => {
       const list = visitsFor(id); list.splice(Number(button.dataset.index), 1); if (!list.length) delete entries[id]; persist(); showStation(id);
     }));
