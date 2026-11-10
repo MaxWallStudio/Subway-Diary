@@ -60,6 +60,12 @@
         text.classList.toggle("is-collapsed", !expanded);
         button.textContent = expanded ? "접기" : "더보기";
         button.setAttribute("aria-expanded", String(expanded));
+        if (!expanded) {
+          requestAnimationFrame(() => {
+            const target = text.closest(".diary-entry, .today-memory-card") || text;
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
       });
     });
   }
