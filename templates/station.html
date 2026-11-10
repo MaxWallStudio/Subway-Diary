@@ -478,6 +478,39 @@ async function updateFavorite(url) {
 }
 </script>
 
+<script>
+document.querySelectorAll(".memory-card .diary-text").forEach((text) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "diary-expand-toggle";
+    button.textContent = "더보기";
+    button.setAttribute("aria-expanded", "false");
+    text.after(button);
+    text.classList.add("diary-expandable", "is-collapsed");
+
+    const collapsedHeight = text.getBoundingClientRect().height;
+    text.classList.remove("is-collapsed");
+    const needsToggle = text.getBoundingClientRect().height > collapsedHeight + 1;
+    text.classList.add("is-collapsed");
+    if (!needsToggle) {
+        button.remove();
+        text.classList.remove("diary-expandable", "is-collapsed");
+        return;
+    }
+
+    button.addEventListener("click", () => {
+        const expanded = text.classList.toggle("is-expanded");
+        text.classList.toggle("is-collapsed", !expanded);
+        button.textContent = expanded ? "접기" : "더보기";
+        button.setAttribute("aria-expanded", String(expanded));
+        if (!expanded) {
+            requestAnimationFrame(() => {
+                text.closest(".memory-card").scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+        }
+    });
+});
+</script>
 </body>
 
 </html>
