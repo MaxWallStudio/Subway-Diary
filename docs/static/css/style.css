@@ -4088,3 +4088,6 @@ body { background: var(--diary-bg); color: var(--diary-text); }
 
 .install-prompt-button { display: inline-flex; align-items: center; justify-content: center; margin: 4px 0 10px; padding: 11px 18px; border: 0; border-radius: 12px; background: var(--diary-accent); color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
 .install-prompt-button[hidden] { display: none !important; }
+
+.install-guide-button { display: block; width: fit-content; margin: 0 auto 18px; padding: 11px 16px; border: 1px solid var(--diary-accent); border-radius: 12px; background: var(--diary-surface); color: var(--diary-accent); font-size: 14px; font-weight: 800; text-decoration: none; box-shadow: var(--diary-shadow-sm); }
+.install-guide-button:hover { background: var(--diary-accent-soft); }

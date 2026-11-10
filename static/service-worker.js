@@ -1,4 +1,4 @@
-const CACHE_NAME = "station-diary-pwa-v7";
+const CACHE_NAME = "station-diary-pwa-v8";
 const APP_SHELL = [
   "/",
   "/static/manifest.webmanifest",
