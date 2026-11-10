@@ -251,15 +251,25 @@ def add_pwa_links(response):
         '<meta name="apple-mobile-web-app-capable" content="yes">'
         f'<link rel="apple-touch-icon" href="{url_for("static", filename="images/diary-icon.svg")}">'
     )
-    script_addition = (
+    browser_guide_script = (
+        f'<script src="{url_for("static", filename="js/browser-guide.js")}" '
+        f'data-install-url="{url_for("install_guide")}" defer></script>'
+    )
+    pwa_register_script = (
         f'<script src="{url_for("static", filename="js/pwa-register.js")}" '
         f'data-worker="{url_for("service_worker")}" '
         f'data-scope="{(request.script_root.rstrip("/") + "/") or "/"}" defer></script>'
     )
     if "</head>" in html and "manifest.webmanifest" not in html:
         html = html.replace("</head>", head_addition + "</head>", 1)
-    if "</body>" in html and "pwa-register.js" not in html:
-        html = html.replace("</body>", script_addition + "</body>", 1)
+    if "</body>" in html:
+        scripts = ""
+        if "browser-guide.js" not in html:
+            scripts += browser_guide_script
+        if "pwa-register.js" not in html:
+            scripts += pwa_register_script
+        if scripts:
+            html = html.replace("</body>", scripts + "</body>", 1)
     response.set_data(html)
     return response
 
@@ -946,6 +956,11 @@ def collection():
 # =========================================================
 # 프로필
 # =========================================================
+
+@app.route("/install")
+def install_guide():
+    return render_template("install.html")
+
 
 @app.route("/profile")
 def profile():

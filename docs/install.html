@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f5f7">
+    <title>앱 설치 안내 - Station Diary</title>
+    <link rel="stylesheet" href="./static/css/style.css">
+    <link rel="stylesheet" href="./static/css/pages.css">
+</head>
+<body>
+<main class="install-page">
+    <a class="back-button" href="./">← 홈으로</a>
+    <header class="install-header">
+        <p class="install-eyebrow">STATION DIARY</p>
+        <h1>앱 설치 안내</h1>
+        <p>별도의 앱스토어 다운로드 없이 브라우저에서 홈 화면에 추가해 사용할 수 있어요.</p>
+    </header>
+
+    <section class="install-device-card" aria-live="polite">
+        <h2 id="install-device-title">기기에 맞는 설치 방법</h2>
+        <p id="install-browser-name"></p>
+        <ol id="install-steps"></ol>
+        <button class="install-prompt-button" id="install-prompt-button" type="button" hidden>앱 설치</button>
+        <p class="install-note">설치 메뉴가 보이지 않으면 브라우저를 최신 버전으로 업데이트하거나 Safari·Chrome·Edge에서 이 페이지를 열어 주세요.</p>
+    </section>
+
+    <section class="install-inapp-card" id="external-browser-help">
+        <h2>인스타그램·카카오톡에서 열었나요?</h2>
+        <p>앱 안의 브라우저에서는 홈 화면 설치나 사진 선택이 제한될 수 있어요. Android에서는 기본 브라우저로 열기를 시도하고, iPhone·iPad에서는 아래 안내에 따라 Safari로 열어 주세요.</p>
+        <ol>
+            <li><strong>인스타그램</strong>: 오른쪽 위 메뉴(⋯)를 누르고 <strong>외부 브라우저에서 열기</strong>를 선택하세요.</li>
+            <li><strong>카카오톡</strong>: 오른쪽 아래 메뉴(⋯)에서 <strong>다른 브라우저로 열기</strong>를 선택하세요. 메뉴가 없다면 주소를 복사해 Safari나 Chrome에 붙여넣으세요.</li>
+        </ol>
+        <button class="install-copy-button" type="button" id="copy-page-address">주소 복사</button>
+        <p class="install-copy-status" id="copy-status" aria-live="polite"></p>
+    </section>
+
+    <p class="install-data-note">기록은 현재 브라우저에 저장됩니다. 설치 후에도 같은 브라우저를 사용해 주세요. 다른 브라우저나 기기로 옮길 때는 프로필에서 기록을 백업하고 복원할 수 있어요.</p>
+</main>
+<script src="./static/js/browser-guide.js" data-install-url="./install.html" defer></script>
+</body>
+</html>

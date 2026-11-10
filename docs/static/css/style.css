@@ -4065,3 +4065,26 @@ body { background: var(--diary-bg); color: var(--diary-text); }
 .station-more-button:hover { color: var(--diary-accent-strong); border-color: var(--diary-accent); transform: translateY(-1px); }
 .station-more-button span { font-size: 16px; transition: transform var(--diary-motion); }
 .station-more-button.is-expanded span { transform: rotate(180deg); }
+
+.diary-expand-toggle[hidden] { display: none !important; }
+
+.scroll-header-install { position: relative; z-index: 100001; display: flex; align-items: center; justify-content: center; height: 38px; margin-left: 8px; padding: 0 14px; border: 1px solid var(--diary-accent); border-radius: 999px; background: #fff; color: var(--diary-accent); font-size: 13px; font-weight: 700; text-decoration: none; }
+@media (max-width: 520px) { .scroll-header-inner { gap: 8px; padding: 0 12px; } .scroll-header-logo { font-size: 16px; } .scroll-header-profile, .scroll-header-install { padding: 0 10px; font-size: 12px; } }
+.install-page { width: min(100% - 32px, 760px); margin: 36px auto 70px; color: var(--diary-text); }
+.install-page > .back-button { display: inline-flex; margin-bottom: 28px; padding: 10px 14px; border-radius: 12px; background: var(--diary-surface); text-decoration: none; }
+.install-header { margin-bottom: 22px; }
+.install-eyebrow { color: var(--diary-accent); font-size: 11px; font-weight: 800; letter-spacing: .15em; }
+.install-header h1 { margin: 0; font-size: clamp(30px, 7vw, 44px); }
+.install-header p, .install-note, .install-data-note { color: var(--diary-muted); line-height: 1.7; }
+.install-device-card, .install-inapp-card { margin: 16px 0; padding: clamp(20px, 5vw, 30px); border: 1px solid var(--diary-line); border-radius: 20px; background: var(--diary-surface); box-shadow: var(--diary-shadow-sm); }
+.install-device-card h2, .install-inapp-card h2 { margin-top: 0; font-size: 19px; }
+.install-device-card ol, .install-inapp-card ol { padding-left: 22px; line-height: 1.9; }
+.install-note, .install-copy-status { font-size: 13px; }
+.install-copy-button, .browser-help-banner button, .browser-help-banner a { display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px; border: 0; border-radius: 11px; background: var(--diary-accent); color: #fff; font: inherit; font-weight: 750; text-decoration: none; cursor: pointer; }
+.browser-help-banner { position: sticky; top: 0; z-index: 1000000; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; padding: 10px 16px; background: #173f36; color: #fff; font-size: 13px; text-align: center; box-shadow: 0 3px 14px #17221e30; }
+.browser-help-banner button, .browser-help-banner a { padding: 7px 11px; background: #fff; color: #173f36; font-size: 12px; }
+
+.visit-hint { display: block; margin-top: 6px; color: var(--diary-muted); font-size: 12px; line-height: 1.5; }
+
+.install-prompt-button { display: inline-flex; align-items: center; justify-content: center; margin: 4px 0 10px; padding: 11px 18px; border: 0; border-radius: 12px; background: var(--diary-accent); color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+.install-prompt-button[hidden] { display: none !important; }

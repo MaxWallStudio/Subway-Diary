@@ -48,6 +48,8 @@ def main() -> None:
             return "./collection.html"
         if endpoint == "profile":
             return "./profile.html"
+        if endpoint == "install_guide":
+            return "./install.html"
         return "./"
 
     template_source = (ROOT / "templates" / "index.html").read_text(encoding="utf-8")
@@ -90,6 +92,7 @@ def main() -> None:
     rendered = rendered.replace(
         "</body>",
         '<script src="./static/js/storage-status.js"></script>\n'
+        '<script src="./static/js/browser-guide.js" data-install-url="./install.html"></script>\n'
         '<script src="./static/js/diary.js"></script>\n'
         '<script>if("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));</script>\n'
         "</body>",
@@ -104,12 +107,16 @@ def main() -> None:
 <link rel="stylesheet" href="./static/css/style.css"><link rel="stylesheet" href="./static/css/pages.css"></head>
 <body data-page="{{ page }}"{% if station_id %} data-station-id="{{ station_id }}"{% endif %}>
 <script src="./static/js/storage-status.js"></script>
+<script src="./static/js/browser-guide.js" data-install-url="./install.html"></script>
 <script src="./static/js/diary.js"></script></body></html>''')
     for page, title in (("collection", "방문 기록"), ("profile", "내 기록"),
                         ("station", "역 기록"), ("record", "기록 작성")):
         (OUT / f"{page}.html").write_text(
             page_template.render(page=page, title=title, station_id=None), encoding="utf-8"
         )
+    (OUT / "install.html").write_text(
+        env.get_template("install.html").render(url_for=page_url), encoding="utf-8"
+    )
     # Remove the per-station files from earlier builds; station.html handles ids in its query string.
     for old_page in OUT.glob("station-[0-9]*.html"):
         old_page.unlink()

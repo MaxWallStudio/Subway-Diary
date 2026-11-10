@@ -1,10 +1,11 @@
-const CACHE_NAME = "station-diary-pwa-v5";
+const CACHE_NAME = "station-diary-pwa-v7";
 const APP_SHELL = [
   "/",
   "/static/manifest.webmanifest",
   "/static/css/style.css",
   "/static/images/diary-icon.svg",
-  "/static/js/pwa-register.js"
+  "/static/js/pwa-register.js",
+  "/static/js/browser-guide.js"
 ];
 
 self.addEventListener("install", event => {

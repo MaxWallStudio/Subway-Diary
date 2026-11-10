@@ -435,6 +435,16 @@
             background: var(--line-color, #aeb2bd);
         }
 
+        .station-card[data-line*="1"] .station-number, .line-dot[data-line*="1"] { background-color: #0052a4; }
+        .station-card[data-line*="2"] .station-number, .line-dot[data-line*="2"] { background-color: #00a84f; }
+        .station-card[data-line*="3"] .station-number, .line-dot[data-line*="3"] { background-color: #ef7c1c; }
+        .station-card[data-line*="4"] .station-number, .line-dot[data-line*="4"] { background-color: #00a5de; }
+        .station-card[data-line*="5"] .station-number, .line-dot[data-line*="5"] { background-color: #996cac; }
+        .station-card[data-line*="6"] .station-number, .line-dot[data-line*="6"] { background-color: #cd7c2f; }
+        .station-card[data-line*="7"] .station-number, .line-dot[data-line*="7"] { background-color: #747f00; }
+        .station-card[data-line*="8"] .station-number, .line-dot[data-line*="8"] { background-color: #e6186c; }
+        .station-card[data-line*="9"] .station-number, .line-dot[data-line*="9"] { background-color: #bdb092; }
+
         .station-icon[data-line] {
             background: var(--line-soft);
         }
@@ -716,6 +726,7 @@
         >
             프로필
         </a>
+        <a href="{{ url_for('install_guide') }}" class="scroll-header-install">앱 설치 안내</a>
 
     </div>
 </header>
