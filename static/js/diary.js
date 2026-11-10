@@ -50,7 +50,11 @@
       button.setAttribute("aria-expanded", "false");
       text.after(button);
       text.classList.add("diary-expandable", "is-collapsed");
-      const needsToggle = text.scrollHeight > text.clientHeight + 1;
+      const collapsedHeight = text.getBoundingClientRect().height;
+      text.classList.remove("is-collapsed");
+      const fullHeight = text.getBoundingClientRect().height;
+      text.classList.add("is-collapsed");
+      const needsToggle = fullHeight > collapsedHeight + 1;
       if (!needsToggle) { button.remove(); return; }
       button.addEventListener("click", () => {
         const expanded = text.classList.toggle("is-expanded");

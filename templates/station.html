@@ -487,8 +487,10 @@ document.querySelectorAll(".memory-card .diary-text").forEach((text) => {
     button.textContent = "더보기";
     button.setAttribute("aria-expanded", "false");
     text.after(button);
+    const fullHeight = text.getBoundingClientRect().height;
     text.classList.add("diary-expandable", "is-collapsed");
-    const needsToggle = text.scrollHeight > text.clientHeight + 1;
+    const collapsedHeight = text.getBoundingClientRect().height;
+    const needsToggle = fullHeight > collapsedHeight + 1;
     if (!needsToggle) {
         button.remove();
         text.classList.remove("diary-expandable", "is-collapsed");
