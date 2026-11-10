@@ -163,6 +163,7 @@
     dialog.querySelector(".diary-visits").innerHTML = `${visits.length ? `<h3>나의 추억 · ${visits.length}개</h3>${[...visits].reverse().map((v, i) => `<article class="diary-entry"><div><b>${esc(v.date)}</b>${v.emotion ? ` · ${esc(v.emotion)}` : ""}</div><p>${esc(v.diary || "기록한 메모가 없어요.")}</p>${photoMarkup(v.photo)}<button type="button" class="diary-delete" data-index="${visits.length - 1 - i}">삭제</button></article>`).join("")}` : `<p class="diary-empty">아직 기록이 없어요.</p>`}<a class="diary-write-link" href="./record.html?id=${id}"><span>✎</span><span>이 역의 기록 작성하기<small>오늘의 기억과 사진을 남겨보세요</small></span><span class="diary-write-arrow">→</span></a>`;
     bindExpandableText(dialog.querySelector(".diary-visits"), ".diary-entry p");
     dialog.querySelectorAll(".diary-delete").forEach(button => button.addEventListener("click", () => {
+      if (!window.confirm("이 추억을 삭제할까요? 삭제한 기록은 되돌릴 수 없습니다.")) return;
       const list = visitsFor(id); list.splice(Number(button.dataset.index), 1); if (!list.length) delete entries[id]; persist(); showStation(id);
     }));
     dialog.showModal();

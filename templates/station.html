@@ -480,18 +480,17 @@ async function updateFavorite(url) {
 
 <script>
 document.querySelectorAll(".memory-card .diary-text").forEach((text) => {
+    if (!text.textContent.trim()) return;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "diary-expand-toggle";
     button.textContent = "더보기";
     button.setAttribute("aria-expanded", "false");
     text.after(button);
+    const fullHeight = text.getBoundingClientRect().height;
     text.classList.add("diary-expandable", "is-collapsed");
-
     const collapsedHeight = text.getBoundingClientRect().height;
-    text.classList.remove("is-collapsed");
-    const needsToggle = text.getBoundingClientRect().height > collapsedHeight + 1;
-    text.classList.add("is-collapsed");
+    const needsToggle = fullHeight > collapsedHeight + 1;
     if (!needsToggle) {
         button.remove();
         text.classList.remove("diary-expandable", "is-collapsed");
