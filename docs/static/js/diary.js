@@ -50,10 +50,7 @@
       button.setAttribute("aria-expanded", "false");
       text.after(button);
       text.classList.add("diary-expandable", "is-collapsed");
-      const collapsedHeight = text.getBoundingClientRect().height;
-      text.classList.remove("is-collapsed");
-      const needsToggle = text.getBoundingClientRect().height > collapsedHeight + 1;
-      text.classList.add("is-collapsed");
+      const needsToggle = text.scrollHeight > text.clientHeight + 1;
       if (!needsToggle) { button.remove(); return; }
       button.addEventListener("click", () => {
         const expanded = text.classList.toggle("is-expanded");
@@ -62,7 +59,7 @@
         button.setAttribute("aria-expanded", String(expanded));
         if (!expanded) {
           requestAnimationFrame(() => {
-            const target = text.closest(".diary-entry, .today-memory-card") || text;
+            const target = text.closest(".diary-entry, .today-memory-card, .memory-card") || text;
             target.scrollIntoView({ behavior: "smooth", block: "start" });
           });
         }

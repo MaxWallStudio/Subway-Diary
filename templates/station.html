@@ -314,7 +314,7 @@
     <!-- 즐겨찾기 -->
 <script>
 async function deleteMemory(button) {
-    if (!confirm("이 추억을 삭제할까요? 삭제한 기록은 되돌릴 수 없습니다.")) return;
+    if (!window.confirm("이 추억을 삭제할까요? 삭제한 기록은 되돌릴 수 없습니다.")) return;
 
     try {
         const response = await fetch(`/visit/${button.dataset.visitId}/delete`, {
@@ -487,10 +487,8 @@ document.querySelectorAll(".memory-card .diary-text").forEach((text) => {
     button.textContent = "더보기";
     button.setAttribute("aria-expanded", "false");
     text.after(button);
-    const fullHeight = text.getBoundingClientRect().height;
     text.classList.add("diary-expandable", "is-collapsed");
-    const collapsedHeight = text.getBoundingClientRect().height;
-    const needsToggle = fullHeight > collapsedHeight + 1;
+    const needsToggle = text.scrollHeight > text.clientHeight + 1;
     if (!needsToggle) {
         button.remove();
         text.classList.remove("diary-expandable", "is-collapsed");

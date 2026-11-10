@@ -9,3 +9,8 @@
 .diary-expandable.is-collapsed{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}.diary-expandable.is-expanded{display:block!important;overflow:visible}.diary-expand-toggle{display:inline-flex;margin:5px 0 0;padding:4px 0;border:0;background:transparent;color:#07845e;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
 
 .diary-write-link { text-decoration: none !important; }
+
+.diary-write-link { display: inline-flex; grid-template-columns: none; align-items: center; gap: 10px; width: fit-content; max-width: 100%; padding: 10px 14px; border: 0; border-radius: 12px; background: #0aa879; color: #fff; text-decoration: none !important; box-shadow: 0 4px 12px #07845e30; }
+.diary-write-link:hover { background: #078f68; }
+.diary-write-link small { color: rgba(255,255,255,.82); }
+
