@@ -4091,3 +4091,6 @@ body { background: var(--diary-bg); color: var(--diary-text); }
 
 .install-guide-button { display: block; width: fit-content; margin: 0 auto 18px; padding: 11px 16px; border: 1px solid var(--diary-accent); border-radius: 12px; background: var(--diary-surface); color: var(--diary-accent); font-size: 14px; font-weight: 800; text-decoration: none; box-shadow: var(--diary-shadow-sm); }
 .install-guide-button:hover { background: var(--diary-accent-soft); }
+
+.install-guide-button { font-family: inherit; cursor: pointer; }
+.install-prompt-button { font-family: inherit; cursor: pointer; }

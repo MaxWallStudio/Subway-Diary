@@ -1,5 +1,5 @@
-const CACHE = "station-diary-pages-v14";
-const SHELL = ["./", "./index.html", "./station.html", "./record.html", "./collection.html", "./profile.html", "./install.html", "./manifest.webmanifest", "./data/stations.json", "./static/css/style.css", "./static/css/pages.css", "./static/js/storage-status.js", "./static/js/browser-guide.js", "./static/js/diary.js", "./static/images/diary-icon.svg"];
+const CACHE = "station-diary-pages-v16";
+const SHELL = ["./", "./index.html", "./station.html", "./record.html", "./collection.html", "./profile.html", "./install.html", "./manifest.webmanifest", "./data/stations.json", "./static/css/style.css", "./static/css/pages.css", "./static/js/storage-status.js", "./static/js/browser-guide.js", "./static/js/diary.js", "./static/images/diary-icon.svg", "./static/images/diary-icon-192.png", "./static/images/diary-icon-512.png"];
 self.addEventListener("install", event => event.waitUntil(
   caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())
 ));

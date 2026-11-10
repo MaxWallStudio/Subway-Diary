@@ -1,8 +1,10 @@
-const CACHE_NAME = "station-diary-pwa-v8";
+const CACHE_NAME = "station-diary-pwa-v10";
 const APP_SHELL = [
   "/",
   "/static/manifest.webmanifest",
   "/static/css/style.css",
+  "/static/images/diary-icon-192.png",
+  "/static/images/diary-icon-512.png",
   "/static/images/diary-icon.svg",
   "/static/js/pwa-register.js",
   "/static/js/browser-guide.js"

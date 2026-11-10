@@ -12,20 +12,35 @@
   const inApp = /Instagram|KAKAOTALK|KakaoTalk|FBAN|FBAV|Messenger|Line\//i.test(ua);
   const guideSteps = document.getElementById("install-steps");
   let deferredInstallPrompt = null;
-  const installPromptButton = document.getElementById("install-prompt-button");
+  const installPromptButton = document.getElementById("install-now-button");
 
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     deferredInstallPrompt = event;
-    if (installPromptButton) installPromptButton.hidden = false;
   });
 
   installPromptButton?.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    await deferredInstallPrompt.userChoice;
+    if (!deferredInstallPrompt) {
+      const installPage = helperScript?.dataset.installUrl;
+      const installUrl = installPage ? new URL(installPage, location.href) : null;
+      if (installUrl && installUrl.pathname !== location.pathname) location.href = installUrl.href;
+      else document.getElementById("install-steps")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    const promptEvent = deferredInstallPrompt;
     deferredInstallPrompt = null;
-    installPromptButton.hidden = true;
+    promptEvent.prompt();
+    const choice = await promptEvent.userChoice;
+    if (choice.outcome === "accepted") {
+      installPromptButton.textContent = "설치 완료";
+      installPromptButton.disabled = true;
+    }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    if (!installPromptButton) return;
+    installPromptButton.textContent = "설치 완료";
+    installPromptButton.disabled = true;
   });
 
   if (guideSteps) {

@@ -1,20 +1,33 @@
 {
-  "id": "/",
-  "name": "Station Diary",
-  "short_name": "Station Diary",
-  "description": "지하철역 방문과 추억을 기록하는 일기장",
-  "lang": "ko",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "background_color": "#f3f5f7",
-  "theme_color": "#f3f5f7",
-  "icons": [
-    {
-      "src": "/static/images/diary-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+    "id":  "/",
+    "name":  "Station Diary",
+    "short_name":  "Diary",
+    "description":  "A personal diary for subway station visits and memories",
+    "lang":  "ko",
+    "start_url":  "/",
+    "scope":  "/",
+    "display":  "standalone",
+    "background_color":  "#f3f5f7",
+    "theme_color":  "#f3f5f7",
+    "prefer_related_applications":  false,
+    "icons":  [
+                  {
+                      "purpose":  "any",
+                      "type":  "image/png",
+                      "sizes":  "192x192",
+                      "src":  "/static/images/diary-icon-192.png"
+                  },
+                  {
+                      "purpose":  "any",
+                      "type":  "image/png",
+                      "sizes":  "512x512",
+                      "src":  "/static/images/diary-icon-512.png"
+                  },
+                  {
+                      "purpose":  "any maskable",
+                      "type":  "image/svg+xml",
+                      "sizes":  "any",
+                      "src":  "/static/images/diary-icon.svg"
+                  }
+              ]
 }
