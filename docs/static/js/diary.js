@@ -48,14 +48,21 @@
       button.className = "diary-expand-toggle";
       button.textContent = "더보기";
       button.setAttribute("aria-expanded", "false");
+      button.hidden = true;
       text.after(button);
       text.classList.add("diary-expandable", "is-collapsed");
-      const collapsedHeight = text.getBoundingClientRect().height;
-      text.classList.remove("is-collapsed");
-      const fullHeight = text.getBoundingClientRect().height;
-      text.classList.add("is-collapsed");
-      const needsToggle = fullHeight > collapsedHeight + 1;
-      if (!needsToggle) { button.remove(); return; }
+      const updateToggleVisibility = () => {
+        if (!text.isConnected || !text.getClientRects().length) return;
+        const wasCollapsed = text.classList.contains("is-collapsed");
+        text.classList.add("is-collapsed");
+        const collapsedHeight = text.getBoundingClientRect().height;
+        text.classList.remove("is-collapsed");
+        const fullHeight = text.getBoundingClientRect().height;
+        if (wasCollapsed) text.classList.add("is-collapsed");
+        button.hidden = fullHeight <= collapsedHeight + 1;
+      };
+      requestAnimationFrame(updateToggleVisibility);
+      if (document.fonts?.ready) document.fonts.ready.then(updateToggleVisibility);
       button.addEventListener("click", () => {
         const expanded = text.classList.toggle("is-expanded");
         text.classList.toggle("is-collapsed", !expanded);

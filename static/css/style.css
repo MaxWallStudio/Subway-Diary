@@ -4065,3 +4065,5 @@ body { background: var(--diary-bg); color: var(--diary-text); }
 .station-more-button:hover { color: var(--diary-accent-strong); border-color: var(--diary-accent); transform: translateY(-1px); }
 .station-more-button span { font-size: 16px; transition: transform var(--diary-motion); }
 .station-more-button.is-expanded span { transform: rotate(180deg); }
+
+.diary-expand-toggle[hidden] { display: none !important; }

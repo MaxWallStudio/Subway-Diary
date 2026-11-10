@@ -14,3 +14,5 @@
 .diary-write-link:hover { background: #078f68; }
 .diary-write-link small { color: rgba(255,255,255,.82); }
 
+
+.diary-expand-toggle[hidden] { display: none !important; }
